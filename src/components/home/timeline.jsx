@@ -1,5 +1,7 @@
-import { motion } from "framer-motion";
+import { useEffect } from "react";
 import Particles from "./particles";
+import AOS from "aos";
+import "aos/dist/aos.css";
 
 const events = [
   { title: "Registration Opens", date: "Nov 30, 2025" },
@@ -10,17 +12,21 @@ const events = [
 ];
 
 export default function Timeline() {
+  useEffect(() => {
+    AOS.init({
+      duration: 800, // animation duration
+      once: true,    // only animate once
+      easing: "ease-in-out",
+    });
+  }, []);
+
   return (
     <section className="relative bg-black py-32 overflow-hidden">
       <Particles />
 
       <div className="max-w-5xl mx-auto px-6 relative">
-
-        <motion.h2
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
+        <h2
+          data-aos="fade-up"
           className="
             text-4xl md:text-5xl font-extrabold text-center mb-24
             bg-gradient-to-r from-white via-green-300 to-green-500
@@ -28,23 +34,19 @@ export default function Timeline() {
           "
         >
           EVENT TIMELINE
-        </motion.h2>
+        </h2>
 
         {/* Vertical Line */}
-        <div className="absolute left-1/2 top-24 bottom-0 w-[2px] bg-green-500/40 -translate-x-1/2 hidden md:block" />
+        <div className="absolute left-1/2 top-24 bottom-0 w-[2px] bg-green-500/40 -translate-x-1/2" />
 
         <div className="space-y-20">
           {events.map((event, i) => (
-            <motion.div
+            <div
               key={i}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: i * 0.1 }}
-              viewport={{ once: true }}
-              className={`
-                relative flex flex-col md:flex-row
-                ${i % 2 === 0 ? "md:justify-start" : "md:justify-end"}
-              `}
+              data-aos={i % 2 === 0 ? "fade-right" : "fade-left"}
+              className={`relative flex flex-col md:flex-row ${
+                i % 2 === 0 ? "md:justify-start" : "md:justify-end"
+              }`}
             >
               {/* Dot */}
               <div className="
@@ -69,7 +71,7 @@ export default function Timeline() {
                   {event.date}
                 </p>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

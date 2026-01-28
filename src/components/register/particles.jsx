@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const PARTICLE_COUNT = 300;
+const PARTICLE_COUNT = 60;
 
 export default function Particles() {
   const [particles, setParticles] = useState([]);

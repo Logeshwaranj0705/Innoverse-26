@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { FaArrowRight, FaCalendarAlt, FaUsers } from "react-icons/fa";
 import Countdown from "./countdown";
 import Particles from "./particles";
-import { FaCreditCard, FaMoneyBillWave, FaWallet } from "react-icons/fa";
+import { FaCreditCard } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 
@@ -68,23 +68,23 @@ export default function Hero() {
 
             <div className="w-full sm:w-80 mt-10 lg:mt-20">
               {/* DATE */}
-              <div className="mb-6 px-6 py-4 rounded-xl bg-white/5 border border-green-300 text-center">
-                <FaCalendarAlt className="mx-auto mb-2 text-xl" />
-                <p className="text-xs tracking-widest text-gray-400">DATE</p>
-                <p className="text-lg font-semibold">27th Feb - 28th Feb</p>
+              <div className="mb-6 px-6 py-4 rounded-xl bg-white/5 border border-green-500 text-center shadow-[0_0_12px_rgba(34,197,94,0.9)]">
+                <FaCalendarAlt className="mx-auto mb-2 text-xl text-green-300" />
+                <p className="text-xs tracking-widest text-green-400">DATE</p>
+                <p className="text-m tracking-widest text-gray-400">27th Feb - 28th Feb</p>
               </div>
 
               {/* TEAM */}
-              <div className="mb-6 px-6 py-4 rounded-xl bg-white/5 border border-green-300 text-center">
-                <FaUsers className="mx-auto mb-2 text-xl" />
-                <p className="text-xs tracking-widest text-gray-400">TEAM SIZE</p>
-                <p className="text-lg font-semibold">2 – 4 Members</p>
+              <div className="mb-6 px-6 py-4 rounded-xl bg-white/5 border border-green-500 text-center shadow-[0_0_12px_rgba(34,197,94,0.9)]">
+                <FaUsers className="mx-auto mb-2 text-xl text-green-300" />
+                <p className="text-xs tracking-widest text-green-400">TEAM SIZE</p>
+                <p className="text-lg tracking-widest text-gray-400">2 – 4 Members</p>
               </div>
 
-              <div className="px-6 py-4 rounded-xl bg-white/5 border border-green-300 text-center">
-                <FaCreditCard className="mx-auto mb-2 text-xl" />
-                <p className="text-xs tracking-widest text-gray-400">ENTRY FEE PER TEAM</p>
-                <p className="text-lg font-semibold">₹300</p>
+              <div className="px-6 py-4 rounded-xl bg-white/5 border border-green-500 text-center shadow-[0_0_12px_rgba(34,197,94,0.9)]">
+                <FaCreditCard className="mx-auto mb-2 text-xl text-green-300" />
+                <p className="text-xs tracking-widest text-green-400">ENTRY FEE PER TEAM</p>
+                <p className="text-lg tracking-widest text-gray-400">₹300</p>
               </div>
             </div>
           </motion.div>

@@ -1,16 +1,24 @@
-import { motion } from "framer-motion";
+import { useEffect } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import image from "../../assets/innoverse-logo.png";
 import { useNavigate } from "react-router-dom";
+import AOS from "aos";
+import "aos/dist/aos.css";
 
 export default function RegisterNav() {
   const navigate = useNavigate();
 
+  useEffect(() => {
+    AOS.init({
+      duration: 600, // animation duration
+      once: true,    // animate only once
+      easing: "ease-out",
+    });
+  }, []);
+
   return (
-    <motion.nav
-      initial={{ y: -60, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
+    <nav
+      data-aos="fade-down"
       className="
         fixed top-0 w-full z-50
         bg-black/70 backdrop-blur-xl
@@ -21,11 +29,9 @@ export default function RegisterNav() {
       <div className="mx-auto px-4 md:px-6 py-4 flex justify-between items-center">
 
         {/* LOGO */}
-        <motion.div
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
+        <div
           onClick={() => navigate("/")}
-          className="flex items-center gap-3 cursor-pointer select-none"
+          className="flex items-center gap-3 cursor-pointer select-none transition-transform duration-300 hover:scale-105 active:scale-95"
         >
           <img
             src={image}
@@ -49,15 +55,10 @@ export default function RegisterNav() {
               ’26
             </span>
           </div>
-        </motion.div>
+        </div>
 
         {/* BACK BUTTON */}
-        <motion.button
-          whileHover={{
-            boxShadow: "0 0 20px rgba(34,197,94,0.6)",
-            scale: 1.04,
-          }}
-          whileTap={{ scale: 0.95 }}
+        <button
           onClick={() => navigate("/")}
           className="
             flex items-center justify-center
@@ -69,7 +70,9 @@ export default function RegisterNav() {
             bg-black/40
             backdrop-blur-md
             transition-all duration-300
-            hover:text-black hover:bg-green-400 cursor-pointer
+            hover:text-black hover:bg-green-400
+            active:scale-95
+            cursor-pointer
           "
         >
           <FaArrowLeft className="text-sm md:text-base" />
@@ -77,9 +80,9 @@ export default function RegisterNav() {
           <span className="hidden md:inline ml-2 text-xs md:text-sm font-semibold tracking-[0.25em]">
             HOME
           </span>
-        </motion.button>
+        </button>
 
       </div>
-    </motion.nav>
+    </nav>
   );
 }

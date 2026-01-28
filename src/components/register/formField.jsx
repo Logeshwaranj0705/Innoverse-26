@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Particles from "./particles";
 import Ticket from "./Ticket";
+import { api } from "../../../public/api.js";
 import scannerPh from "../../assets/scanner.jpeg";
 
 const FormField = () => {
@@ -62,26 +63,53 @@ const FormField = () => {
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
 
-    if (!paymentImage || !transactionId.trim()) {
-      alert("Please complete payment details");
-      return;
-    }
 
-    const payload = {
-      event: "INNOVERSE 26",
-      teamName,
-      teamSize,
-      members,
-      transactionId,
-      submittedAt: new Date().toISOString(),
-    };
+  const handleSubmit = async (e) => {
+  e.preventDefault()
 
-    setTicketData(payload);
-    setShowTicket(true);
-  };
+  if (!paymentImage || !transactionId.trim()) {
+    alert("Please complete payment details")
+    return
+  }
+
+  const toBase64 = file => new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = error => reject(error)
+  })
+
+  const imageBase64 = await toBase64(paymentImage)
+
+  const payload = {
+    event: "INNOVERSE 26",
+    teamName,
+    teamSize,
+    members,
+    transactionId,
+    paymentImage: imageBase64,
+    submittedAt: new Date().toISOString()
+  }
+
+  const res = await fetch(`${api}/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+
+  const data = await res.json()
+
+  if (data?.success) {
+    setTicketData(data.data)
+    setShowTicket(true)
+  } else {
+    alert(data.error || "Registration failed")
+  }
+}
+
+
+
 
   if (showTicket && ticketData) {
     return <Ticket data={ticketData} />;

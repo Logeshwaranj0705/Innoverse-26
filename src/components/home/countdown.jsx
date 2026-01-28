@@ -60,8 +60,8 @@ export default function Countdown() {
             viewport={{ once: true }}
             className="
               w-28 h-28 rounded-xl
-              border border-green-400/40
-              shadow-[0_0_30px_rgba(34,197,94,0.3)]
+              border border-green-500
+              shadow-[0_0_20px_rgba(34,197,94,0.9)]
               flex flex-col items-center justify-center
             "
           >
