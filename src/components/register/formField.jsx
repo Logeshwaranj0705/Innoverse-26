@@ -53,7 +53,7 @@ const FormField = () => {
       return "";
     }
 
-    if (field === "regNo") {
+    if (field === "clg") {
       if (!value) return "Register number is required";
       if (!REGNO_RE.test(value)) return "Register number format is invalid";
       return "";
@@ -114,7 +114,7 @@ const FormField = () => {
       Array.from({ length: size }, (_, i) => ({
         role: i === 0 ? "Leader" : `Member ${i}`,
         name: "",
-        regNo: "",
+        clg: "",
         email: "",
         mobile: "",
         department: "",
@@ -144,7 +144,7 @@ const FormField = () => {
   const validateCurrentMember = () => {
     const idx = currentIndex - 1;
     const m = members[idx];
-    const requiredFields = ["name", "regNo", "email", "mobile", "department"];
+    const requiredFields = ["name", "clg", "email", "mobile", "department"];
 
     const fieldErrors = {};
     requiredFields.forEach((f) => {
@@ -236,7 +236,7 @@ const FormField = () => {
         members: members.map((m) => ({
           ...m,
           name: normalizeSpaces(m.name),
-          regNo: normalizeSpaces(m.regNo),
+          clg: normalizeSpaces(m.regNo),
           email: m.email.trim(),
           mobile: m.mobile.replace(/\s+/g, ""),
           department: normalizeSpaces(m.department),
