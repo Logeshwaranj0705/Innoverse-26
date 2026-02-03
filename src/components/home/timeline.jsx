@@ -4,18 +4,20 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 
 const events = [
-  { title: "Registration Opens", date: "Nov 30, 2025" },
-  { title: "Round 1 Closes", date: "Jan 15, 2026" },
-  { title: "Round 1 Results", date: "Jan 21, 2026" },
-  { title: "Hackathon Starts", date: "Jan 30, 2026" },
-  { title: "Final Presentations", date: "Jan 31, 2026" },
+  { title: "Registration Opens", date: "Feb 5th, 2026" },
+  { title: "Problem Statement Selection", date: "Feb 26th, 2026" },
+  { title: "Entry Timing", date: "Feb 27th, 2026 • 8:30 AM" },
+  { title: "Hackathon Starts", date: "Feb 27th, 2026 • 11:00 AM" },
+  { title: "Level 1 Evaluation", date: "Feb 27th, 2026 • 4:00 PM" },
+  { title: "Level 2 Evaluation", date: "Feb 27th, 2026 • 9:00 PM" },
+  { title: "Final Presentation", date: "Feb 28th, 2026 • 11:00 AM" },
 ];
 
 export default function Timeline() {
   useEffect(() => {
     AOS.init({
-      duration: 800, // animation duration
-      once: true,    // only animate once
+      duration: 800,
+      once: true,    
       easing: "ease-in-out",
     });
   }, []);

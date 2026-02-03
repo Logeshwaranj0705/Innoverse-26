@@ -20,7 +20,7 @@ export default function Navbar() {
     setTimeout(() => {
       const navbarHeight = getNavbarHeight();
       const offset = ["about", "prizes"].includes(sectionId)
-        ? navbarHeight + 40
+        ? navbarHeight + 35
         : navbarHeight;
 
       const topPos =

@@ -39,7 +39,7 @@ export default function Hero() {
             <motion.p
               className="mt-5 ml-2 tracking-[0.3em] text-sm text-gray-300"
             >
-              24-HOUR INTRA-COLLEGE HACKATHON
+              24-HOUR INTER-COLLEGE HACKATHON
             </motion.p>
 
             <div className="mt-14">
@@ -78,13 +78,13 @@ export default function Hero() {
               <div className="mb-6 px-6 py-4 rounded-xl bg-white/5 border border-green-500 text-center shadow-[0_0_12px_rgba(34,197,94,0.9)]">
                 <FaUsers className="mx-auto mb-2 text-xl text-green-300" />
                 <p className="text-xs tracking-widest text-green-400">TEAM SIZE</p>
-                <p className="text-lg tracking-widest text-gray-400">2 – 4 Members</p>
+                <p className="text-lg tracking-widest text-gray-400">3 – 4 Members</p>
               </div>
 
               <div className="px-6 py-4 rounded-xl bg-white/5 border border-green-500 text-center shadow-[0_0_12px_rgba(34,197,94,0.9)]">
                 <FaCreditCard className="mx-auto mb-2 text-xl text-green-300" />
                 <p className="text-xs tracking-widest text-green-400">ENTRY FEE PER TEAM</p>
-                <p className="text-lg tracking-widest text-gray-400">₹300</p>
+                <p className="text-lg tracking-widest text-gray-400">₹500</p>
               </div>
             </div>
           </motion.div>
