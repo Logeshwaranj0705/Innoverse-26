@@ -411,7 +411,7 @@ const FormField = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[
                   ["FULL NAME", "name"],
-                  ["REGISTER NUMBER", "regNo"],
+                  ["COLLEGE", "clg"],
                   ["MOBILE NUMBER", "mobile"],
                   ["DEPARTMENT", "department"],
                 ].map(([label, field]) => (
@@ -558,9 +558,9 @@ const FormField = () => {
                         </div>
 
                         <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
-                          <span className="text-green-300/60">Reg No</span>
+                          <span className="text-green-300/60">College</span>
                           <span className="text-green-100 text-right font-medium">
-                            {m.regNo || "—"}
+                            {m.clg || "—"}
                           </span>
                         </div>
 
