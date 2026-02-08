@@ -5,17 +5,17 @@ import Particles from "./particles"
 const prizes = [
   {
     place: "1ST PLACE",
-    amount: "₹8,000",
+    amount: "₹10,000",
     glow: "shadow-[0_0_45px_rgba(34,197,94,1)]",
   },
   {
     place: "2ND PLACE",
-    amount: "₹5,000",
+    amount: "₹8,000",
     glow: "shadow-[0_0_30px_rgba(34,197,94,0.8)]",
   },
   {
     place: "3RD PLACE",
-    amount: "₹3,000",
+    amount: "₹5,000",
     glow: "shadow-[0_0_20px_rgba(34,197,94,0.6)]",
   },
 ]
