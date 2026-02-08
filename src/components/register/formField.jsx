@@ -2,7 +2,8 @@ import React, { useMemo, useState } from "react";
 import Particles from "./particles";
 import Ticket from "./Ticket";
 import { api } from "../../../public/api.js";
-import scannerPh from "../../assets/scanner.jpeg";
+import scanner3 from "../../assets/scanner-3.jpeg";
+import scanner4 from "../../assets/scanner-4.png";
 import toast, { Toaster } from "react-hot-toast";
 
 const NAME_RE = /^[A-Za-z\s.'-]{2,60}$/;
@@ -33,6 +34,12 @@ const FormField = () => {
     transactionId: "",
     paymentImage: "",
   });
+
+  const scanImg = useMemo(() => {
+    if (Number(teamSize) === 3) return scanner3;
+    if (Number(teamSize) === 4) return scanner4;
+    return scanner3;
+  }, [teamSize]);
 
   const validateTeamName = (v) => {
     const value = normalizeSpaces(v);
@@ -236,7 +243,7 @@ const FormField = () => {
         members: members.map((m) => ({
           ...m,
           name: normalizeSpaces(m.name),
-          clg: normalizeSpaces(m.regNo),
+          clg: normalizeSpaces(m.clg),
           email: m.email.trim(),
           mobile: m.mobile.replace(/\s+/g, ""),
           department: normalizeSpaces(m.department),
@@ -286,7 +293,7 @@ const FormField = () => {
 
   const canProceed = useMemo(() => {
     if (!teamSize || !members.length) return false;
-    const req = ["name", "regNo", "email", "mobile", "department"];
+    const req = ["name", "clg", "email", "mobile", "department"];
     return req.every((f) => !validateField(f, currentMember?.[f] ?? ""));
   }, [teamSize, members, currentIndex]);
 
@@ -311,9 +318,7 @@ const FormField = () => {
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80">
           <div className="flex flex-col items-center gap-4">
             <div className="w-14 h-14 rounded-full border-4 border-green-400 border-t-transparent animate-spin" />
-            <p className="text-green-300 tracking-widest text-sm">
-              GENERATING TICKET
-            </p>
+            <p className="text-green-300 tracking-widest text-sm">GENERATING TICKET</p>
           </div>
         </div>
       )}
@@ -337,9 +342,7 @@ const FormField = () => {
           </div>
 
           <div className="space-y-6">
-            <h3 className="text-green-300 font-semibold tracking-widest">
-              TEAM DETAILS
-            </h3>
+            <h3 className="text-green-300 font-semibold tracking-widest">TEAM DETAILS</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-1">
@@ -404,16 +407,15 @@ const FormField = () => {
           {teamSize && !showSummary && (
             <div className="space-y-6">
               <h3 className="text-green-400 font-semibold tracking-widest">
-                {currentIndex === 1 ? "LEADER" : `MEMBER ${currentIndex - 1}`}{" "}
-                DETAILS
+                {currentIndex === 1 ? "LEADER" : `MEMBER ${currentIndex - 1}`} DETAILS
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[
                   ["FULL NAME", "name"],
-                  ["COLLEGE", "clg"],
+                  ["COLLEGE NAME", "clg"],
                   ["MOBILE NUMBER", "mobile"],
-                  ["DEPARTMENT", "department"],
+                  ["DEPARTMENT - YEAR", "department"],
                 ].map(([label, field]) => (
                   <div key={field} className="flex flex-col gap-1">
                     <label className="text-[11px] text-green-300/60 tracking-widest">
@@ -430,9 +432,7 @@ const FormField = () => {
                       inputMode={field === "mobile" ? "numeric" : undefined}
                       type={field === "mobile" ? "tel" : "text"}
                       className={`p-3 rounded-xl bg-transparent border ${
-                        memberErr[field]
-                          ? "border-red-500/60"
-                          : "border-green-400/30"
+                        memberErr[field] ? "border-red-500/60" : "border-green-400/30"
                       }`}
                       required
                     />
@@ -456,9 +456,7 @@ const FormField = () => {
                       else clearMemberError("email");
                     }}
                     className={`p-3 rounded-xl bg-transparent border ${
-                      memberErr.email
-                        ? "border-red-500/60"
-                        : "border-green-400/30"
+                      memberErr.email ? "border-red-500/60" : "border-green-400/30"
                     }`}
                     required
                   />
@@ -587,8 +585,8 @@ const FormField = () => {
                 <div className="bg-white rounded-xl p-4 text-center text-black">
                   <p className="font-semibold">Scan & Pay</p>
                   <img
-                    src={scannerPh}
-                    alt="QR"
+                    src={scanImg}
+                    alt={`QR for team size ${teamSize || ""}`}
                     className="mx-auto w-[260px] h-[300px] object-contain mt-2"
                   />
                 </div>
@@ -597,9 +595,7 @@ const FormField = () => {
                   <label className="relative border-2 border-dashed border-green-400/40 rounded-xl h-[360px] flex items-center justify-center cursor-pointer overflow-hidden">
                     {!paymentImage ? (
                       <div className="text-center">
-                        <h1 className="text-gray-400 text-sm tracking-widest">
-                          UPLOAD
-                        </h1>
+                        <h1 className="text-gray-400 text-sm tracking-widest">UPLOAD</h1>
                         <span className="text-gray-400 text-sm tracking-widest">
                           Payment Screenshot
                         </span>
