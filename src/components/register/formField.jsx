@@ -7,7 +7,7 @@ import scanner4 from "../../assets/scanner-4.png";
 import toast, { Toaster } from "react-hot-toast";
 
 const NAME_RE = /^[A-Za-z\s.'-]{2,60}$/;
-const REGNO_RE = /^[A-Za-z0-9._/-]{2,25}$/;
+const CLG_RE = /^[A-Za-z0-9._/-]{2,25}$/;
 const DEPT_RE = /^[A-Za-z\s&().,'-]{2,60}$/;
 const PHONE_RE = /^[6-9]\d{9}$/;
 const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
@@ -62,7 +62,7 @@ const FormField = () => {
 
     if (field === "clg") {
       if (!value) return "Register number is required";
-      if (!REGNO_RE.test(value)) return "Register number format is invalid";
+      if (!CLG_RE.test(value)) return "Register number format is invalid";
       return "";
     }
 
@@ -415,7 +415,7 @@ const FormField = () => {
                   ["FULL NAME", "name"],
                   ["COLLEGE NAME", "clg"],
                   ["MOBILE NUMBER", "mobile"],
-                  ["DEPARTMENT - YEAR", "department"],
+                  ["DEPARTMENT", "department"],
                 ].map(([label, field]) => (
                   <div key={field} className="flex flex-col gap-1">
                     <label className="text-[11px] text-green-300/60 tracking-widest">
