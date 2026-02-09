@@ -4,10 +4,12 @@ import jsPDF from "jspdf";
 import Particle from "./particles";
 import { FaWhatsapp } from "react-icons/fa";
 
-
 const Ticket = ({ data }) => {
   const qrRef = useRef(null);
-  const ticketId = `INV26-${Date.now()}`;
+  const ticketId = data?.ticketId || `INV26-${Date.now()}`;
+
+  const memberLine = (m, i) =>
+    `${i + 1}. ${m.name} | ${m.clg} | ${m.degree} | ${m.year} Year | ${m.mobile} | ${m.email}`;
 
   const qrText = `
 INNOVERSE 26 ENTRY PASS
@@ -16,12 +18,7 @@ Team Name: ${data.teamName}
 Team Size: ${data.teamSize}
 
 Members:
-${data.members
-  .map(
-    (m, i) =>
-      `${i + 1}. ${m.name} | ${m.regNo} | ${m.department} | ${m.mobile}`
-  )
-  .join("\n")}
+${(data.members || []).map(memberLine).join("\n")}
 
 Ticket ID: ${ticketId}
 `;
@@ -63,29 +60,24 @@ Ticket ID: ${ticketId}
     }
 
     let y = 85;
-
     pdf.setFontSize(13);
     pdf.setTextColor(34, 197, 94);
     pdf.text("TEAM MEMBERS", LEFT_MARGIN, y);
     y += 8;
 
-    pdf.setFontSize(11);
+    pdf.setFontSize(10);
     pdf.setTextColor(255, 255, 255);
 
-    data.members.forEach((m, i) => {
-      const line = `${i + 1}. ${m.name} | ${m.regNo} | ${m.department} | ${m.mobile}`;
+    (data.members || []).forEach((m, i) => {
+      const line = memberLine(m, i);
       const wrapped = pdf.splitTextToSize(line, TEXT_WIDTH);
       pdf.text(wrapped, LEFT_MARGIN, y);
-      y += wrapped.length * 7;
+      y += wrapped.length * 6;
     });
 
     pdf.setTextColor(180, 180, 180);
     pdf.setFontSize(10);
-    pdf.text(
-      "Present this ticket (printed or digital) at the entry gate.",
-      LEFT_MARGIN,
-      y + 10
-    );
+    pdf.text("Present this ticket (printed or digital) at the entry gate.", LEFT_MARGIN, y + 10);
 
     pdf.save(`${data.teamName}_INNOVERSE_26_TICKET.pdf`);
   };
@@ -94,30 +86,21 @@ Ticket ID: ${ticketId}
     <div className="min-h-screen bg-black flex flex-col items-center justify-center px-6 text-white mt-10">
       <Particle />
       <div className="w-full max-w-md bg-black border border-green-400/40 rounded-3xl p-8 space-y-6 shadow-[0_0_80px_rgba(34,197,94,0.25)]">
-        <h2 className="text-center text-green-400 text-xl font-bold tracking-widest">
-          INNOVERSE ’26
-        </h2>
+        <h2 className="text-center text-green-400 text-xl font-bold tracking-widest">INNOVERSE ’26</h2>
 
         <div className="text-center">
           <p className="text-xs text-green-300/60 tracking-widest">TEAM NAME</p>
-          <h3 className="text-lg font-semibold tracking-widest">
-            {data.teamName}
-          </h3>
+          <h3 className="text-lg font-semibold tracking-widest">{data.teamName}</h3>
         </div>
 
         <div ref={qrRef} className="flex justify-center py-4">
-          <QRCodeCanvas
-            value={qrText}
-            size={200}
-            bgColor="#000000"
-            fgColor="#22c55e"
-            level="H"
-          />
+          <QRCodeCanvas value={qrText} size={200} bgColor="#000000" fgColor="#22c55e" level="H" />
         </div>
 
         <div className="border-t border-green-400/20 pt-4 text-center text-xs text-green-300/60 tracking-widest">
           TICKET ID: {ticketId}
         </div>
+
         <div className="text-center">
           <a
             href="https://chat.whatsapp.com/JXNrBgpLu5IHZ6kKH6VQtU?mode=gi_t"
@@ -131,7 +114,6 @@ Ticket ID: ${ticketId}
               border border-green-400/30
               bg-white/5
               shadow-[0_0_12px_rgba(34,197,94,0.35)]
-              animate-whatsappPulse
               hover:shadow-[0_0_25px_rgba(34,197,94,0.9)]
               hover:-translate-y-1
               transition-all duration-300
@@ -151,4 +133,5 @@ Ticket ID: ${ticketId}
     </div>
   );
 };
+
 export default Ticket;
