@@ -1,6 +1,7 @@
 import { FaFacebookF, FaInstagram, FaLinkedinIn } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import Particles from "./particles";
+import sponsorLogo from "../../assets/Logo.png";
 
 const sections = ["timeline", "about", "tracks", "prizes"];
 
@@ -41,12 +42,21 @@ export default function Footer() {
       <div className="relative max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-16 z-10">
         <div className="flex flex-col gap-6">
           <h3 className="text-4xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-300 to-green-500 drop-shadow-sm">
-            INNOVERSE
+            INNOVERSE '26
           </h3>
-          <p className="text-green-100/60 text-sm md:text-base leading-relaxed max-w-xs">
-            Bringing together innovators, developers, and problem-solvers to
-            ideate and build impactful solutions.
-          </p>
+          <div className="w-full flex flex-col items-start">
+            <p className="text-green-100/30 text-[10px] tracking-[0.35em] uppercase mb-3">
+              Sponsored By
+            </p>
+
+            <div className="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-white/5 border border-white/10 shadow-[0_0_30px_rgba(34,197,94,0.12)]">
+              <img
+                src={sponsorLogo}
+                alt="Sponsor Logo"
+                className="h-8 md:h-9 w-auto object-contain opacity-90"
+              />
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-col gap-6">
