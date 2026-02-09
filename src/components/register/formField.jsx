@@ -3,17 +3,20 @@ import Particles from "./particles";
 import Ticket from "./Ticket";
 import { api } from "../../../public/api.js";
 import scanner3 from "../../assets/scanner-3.jpeg";
-import scanner4 from "../../assets/scanner-4.png";
+import scanner4 from "../../assets/scanner-4.jpeg";
 import toast, { Toaster } from "react-hot-toast";
 
 const NAME_RE = /^[A-Za-z\s.'-]{2,60}$/;
-const CLG_RE = /^[A-Za-z0-9._/-]{2,25}$/;
-const DEPT_RE = /^[A-Za-z\s&().,'-]{2,60}$/;
+const REGNO_RE = /^[A-Za-z0-9._/-]{2,25}$/;
 const PHONE_RE = /^[6-9]\d{9}$/;
 const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 const TXN_RE = /^[A-Za-z0-9_-]{6,40}$/;
 
 const normalizeSpaces = (v) => v.replace(/\s+/g, " ").trim();
+
+const YEARS = ["1", "2", "3", "4"];
+const GENDERS = ["Male", "Female", "Other"];
+const DEGREES = ["B.E", "B.Tech", "B.Sc", "BCA", "M.E", "M.Tech", "M.Sc", "MCA", "MBA", "PhD", "Other"];
 
 const FormField = () => {
   const [teamName, setTeamName] = useState("");
@@ -52,7 +55,10 @@ const FormField = () => {
   };
 
   const validateField = (field, rawValue) => {
-    const value = field === "mobile" ? rawValue.trim() : normalizeSpaces(rawValue);
+    const value =
+      field === "mobile" || field === "email"
+        ? String(rawValue || "").trim()
+        : normalizeSpaces(String(rawValue || ""));
 
     if (field === "name") {
       if (!value) return "Full name is required";
@@ -60,29 +66,35 @@ const FormField = () => {
       return "";
     }
 
-    if (field === "clg") {
-      if (!value) return "Register number is required";
-      if (!CLG_RE.test(value)) return "Register number format is invalid";
-      return "";
-    }
 
     if (field === "email") {
-      const email = rawValue.trim();
-      if (!email) return "Email is required";
-      if (!EMAIL_RE.test(email)) return "Enter a valid email address";
+      if (!value) return "Email is required";
+      if (!EMAIL_RE.test(value)) return "Enter a valid email address";
       return "";
     }
 
     if (field === "mobile") {
-      const phone = rawValue.replace(/\s+/g, "");
+      const phone = String(rawValue || "").replace(/\s+/g, "");
       if (!phone) return "Mobile number is required";
       if (!PHONE_RE.test(phone)) return "Enter a valid 10-digit Indian mobile number";
       return "";
     }
 
-    if (field === "department") {
-      if (!value) return "Department is required";
-      if (!DEPT_RE.test(value)) return "Department must contain only letters";
+    if (field === "gender") {
+      if (!value) return "Gender is required";
+      if (!GENDERS.includes(value)) return "Select a valid gender";
+      return "";
+    }
+
+    if (field === "degree") {
+      if (!value) return "Degree is required";
+      if (!DEGREES.includes(value)) return "Select a valid degree";
+      return "";
+    }
+
+    if (field === "year") {
+      if (!value) return "Year is required";
+      if (!YEARS.includes(value)) return "Select a valid year";
       return "";
     }
 
@@ -124,7 +136,9 @@ const FormField = () => {
         clg: "",
         email: "",
         mobile: "",
-        department: "",
+        gender: "",
+        degree: "",
+        year: "",
       }))
     );
   };
@@ -132,8 +146,7 @@ const FormField = () => {
   const handleChange = (field, value) => {
     let v = value;
 
-    if (field === "name" || field === "department" || field === "teamName")
-      v = v.replace(/\s+/g, " ");
+    if (field === "name" || field === "teamName") v = v.replace(/\s+/g, " ");
     if (field === "mobile") v = v.replace(/[^\d]/g, "").slice(0, 10);
     if (field === "email") v = v.trim();
 
@@ -151,7 +164,7 @@ const FormField = () => {
   const validateCurrentMember = () => {
     const idx = currentIndex - 1;
     const m = members[idx];
-    const requiredFields = ["name", "clg", "email", "mobile", "department"];
+    const requiredFields = ["name", "clg", "email", "mobile", "gender", "degree", "year"];
 
     const fieldErrors = {};
     requiredFields.forEach((f) => {
@@ -244,9 +257,11 @@ const FormField = () => {
           ...m,
           name: normalizeSpaces(m.name),
           clg: normalizeSpaces(m.clg),
-          email: m.email.trim(),
-          mobile: m.mobile.replace(/\s+/g, ""),
-          department: normalizeSpaces(m.department),
+          email: (m.email || "").trim(),
+          mobile: String(m.mobile || "").replace(/\s+/g, ""),
+          gender: (m.gender || "").trim(),
+          degree: (m.degree || "").trim(),
+          year: String(m.year || "").trim(),
         })),
         transactionId: transactionId.trim(),
         paymentImage: imageBase64,
@@ -267,10 +282,7 @@ const FormField = () => {
       }
 
       if (!res.ok) {
-        const msg =
-          data?.error ||
-          data?.message ||
-          `Server error (${res.status}). Please try again.`;
+        const msg = data?.error || data?.message || `Server error (${res.status}). Please try again.`;
         throw new Error(msg);
       }
 
@@ -293,7 +305,7 @@ const FormField = () => {
 
   const canProceed = useMemo(() => {
     if (!teamSize || !members.length) return false;
-    const req = ["name", "clg", "email", "mobile", "department"];
+    const req = ["name", "clg", "email", "mobile", "gender", "degree", "year"];
     return req.every((f) => !validateField(f, currentMember?.[f] ?? ""));
   }, [teamSize, members, currentIndex]);
 
@@ -332,12 +344,8 @@ const FormField = () => {
         >
           <div className="flex items-center justify-between gap-6">
             <div>
-              <h2 className="text-2xl font-bold tracking-widest text-green-400">
-                TEAM REGISTRATION
-              </h2>
-              <p className="mt-1 text-sm text-green-300/60">
-                Enter team and participant details carefully
-              </p>
+              <h2 className="text-2xl font-bold tracking-widest text-green-400">TEAM REGISTRATION</h2>
+              <p className="mt-1 text-sm text-green-300/60">Enter team and participant details carefully</p>
             </div>
           </div>
 
@@ -346,9 +354,7 @@ const FormField = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-1">
-                <label className="text-[11px] text-green-300/60 tracking-widest">
-                  TEAM NAME
-                </label>
+                <label className="text-[11px] text-green-300/60 tracking-widest">TEAM NAME</label>
                 <input
                   placeholder="Team Name"
                   value={teamName}
@@ -363,15 +369,11 @@ const FormField = () => {
                   }`}
                   required
                 />
-                {errors.teamName && (
-                  <p className="text-xs text-red-400/90">{errors.teamName}</p>
-                )}
+                {errors.teamName && <p className="text-xs text-red-400/90">{errors.teamName}</p>}
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-[11px] text-green-300/60 tracking-widest">
-                  TEAM SIZE
-                </label>
+                <label className="text-[11px] text-green-300/60 tracking-widest">TEAM SIZE</label>
                 <select
                   value={teamSize}
                   onChange={(e) => handleTeamSize(Number(e.target.value))}
@@ -384,9 +386,7 @@ const FormField = () => {
                   <option value="3">3 Members</option>
                   <option value="4">4 Members</option>
                 </select>
-                {errors.teamSize && (
-                  <p className="text-xs text-red-400/90">{errors.teamSize}</p>
-                )}
+                {errors.teamSize && <p className="text-xs text-red-400/90">{errors.teamSize}</p>}
               </div>
             </div>
           </div>
@@ -394,12 +394,8 @@ const FormField = () => {
           {!teamSize && (
             <div className="flex justify-center">
               <div className="w-full max-w-xl text-center border border-green-400/30 rounded-2xl p-10 bg-black/50">
-                <h3 className="text-green-400 text-xl font-bold tracking-widest">
-                  MAKE YOUR FIRST MOVE
-                </h3>
-                <p className="mt-3 text-green-300/60 text-sm">
-                  Select a team size to begin your Innoverse journey
-                </p>
+                <h3 className="text-green-400 text-xl font-bold tracking-widest">MAKE YOUR FIRST MOVE</h3>
+                <p className="mt-3 text-green-300/60 text-sm">Select a team size to begin your Innoverse journey</p>
               </div>
             </div>
           )}
@@ -411,41 +407,139 @@ const FormField = () => {
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  ["FULL NAME", "name"],
-                  ["COLLEGE NAME", "clg"],
-                  ["MOBILE NUMBER", "mobile"],
-                  ["DEPARTMENT", "department"],
-                ].map(([label, field]) => (
-                  <div key={field} className="flex flex-col gap-1">
-                    <label className="text-[11px] text-green-300/60 tracking-widest">
-                      {label}
-                    </label>
-                    <input
-                      value={currentMember[field] || ""}
-                      onChange={(e) => handleChange(field, e.target.value)}
-                      onBlur={() => {
-                        const msg = validateField(field, currentMember[field] || "");
-                        if (msg) setMemberError(field, msg);
-                        else clearMemberError(field);
-                      }}
-                      inputMode={field === "mobile" ? "numeric" : undefined}
-                      type={field === "mobile" ? "tel" : "text"}
-                      className={`p-3 rounded-xl bg-transparent border ${
-                        memberErr[field] ? "border-red-500/60" : "border-green-400/30"
-                      }`}
-                      required
-                    />
-                    {memberErr[field] && (
-                      <p className="text-xs text-red-400/90">{memberErr[field]}</p>
-                    )}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-green-300/60 tracking-widest">FULL NAME</label>
+                  <input
+                    value={currentMember.name || ""}
+                    onChange={(e) => handleChange("name", e.target.value)}
+                    onBlur={() => {
+                      const msg = validateField("name", currentMember.name || "");
+                      if (msg) setMemberError("name", msg);
+                      else clearMemberError("name");
+                    }}
+                    className={`p-3 rounded-xl bg-transparent border ${
+                      memberErr.name ? "border-red-500/60" : "border-green-400/30"
+                    }`}
+                    required
+                  />
+                  {memberErr.name && <p className="text-xs text-red-400/90">{memberErr.name}</p>}
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-green-300/60 tracking-widest">COLLEGE NAME</label>
+                  <input
+                    value={currentMember.clg || ""}
+                    onChange={(e) => handleChange("clg", e.target.value)}
+                    onBlur={() => {
+                      const msg = validateField("clg", currentMember.clg || "");
+                      if (msg) setMemberError("clg", msg);
+                      else clearMemberError("clg");
+                    }}
+                    className={`p-3 rounded-xl bg-transparent border ${
+                      memberErr.clg ? "border-red-500/60" : "border-green-400/30"
+                    }`}
+                    required
+                  />
+                  {memberErr.clg && <p className="text-xs text-red-400/90">{memberErr.clg}</p>}
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-green-300/60 tracking-widest">MOBILE NUMBER</label>
+                  <input
+                    inputMode="numeric"
+                    type="tel"
+                    value={currentMember.mobile || ""}
+                    onChange={(e) => handleChange("mobile", e.target.value)}
+                    onBlur={() => {
+                      const msg = validateField("mobile", currentMember.mobile || "");
+                      if (msg) setMemberError("mobile", msg);
+                      else clearMemberError("mobile");
+                    }}
+                    className={`p-3 rounded-xl bg-transparent border ${
+                      memberErr.mobile ? "border-red-500/60" : "border-green-400/30"
+                    }`}
+                    required
+                  />
+                  {memberErr.mobile && <p className="text-xs text-red-400/90">{memberErr.mobile}</p>}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-[11px] text-green-300/60 tracking-widest">GENDER</label>
+                  <div
+                    className={`rounded-xl border p-3 ${
+                      memberErr.gender ? "border-red-500/60" : "border-green-400/30"
+                    }`}
+                  >
+                    <div className="flex flex-wrap gap-4">
+                      {GENDERS.map((g) => (
+                        <label key={g} className="flex items-center gap-2 text-sm text-green-100/90 cursor-pointer">
+                          <input
+                            type="radio"
+                            name={`gender-${currentIndex}`}
+                            value={g}
+                            checked={currentMember.gender === g}
+                            onChange={(e) => handleChange("gender", e.target.value)}
+                          />
+                          <span className="tracking-wide">{g}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                ))}
+                  {memberErr.gender && <p className="text-xs text-red-400/90">{memberErr.gender}</p>}
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-green-300/60 tracking-widest">DEGREE</label>
+                  <select
+                    value={currentMember.degree || ""}
+                    onChange={(e) => handleChange("degree", e.target.value)}
+                    onBlur={() => {
+                      const msg = validateField("degree", currentMember.degree || "");
+                      if (msg) setMemberError("degree", msg);
+                      else clearMemberError("degree");
+                    }}
+                    className={`p-3 rounded-xl bg-black border ${
+                      memberErr.degree ? "border-red-500/60" : "border-green-400/30"
+                    }`}
+                    required
+                  >
+                    <option value="">Select Degree</option>
+                    {DEGREES.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                  {memberErr.degree && <p className="text-xs text-red-400/90">{memberErr.degree}</p>}
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-green-300/60 tracking-widest">YEAR</label>
+                  <select
+                    value={currentMember.year || ""}
+                    onChange={(e) => handleChange("year", e.target.value)}
+                    onBlur={() => {
+                      const msg = validateField("year", currentMember.year || "");
+                      if (msg) setMemberError("year", msg);
+                      else clearMemberError("year");
+                    }}
+                    className={`p-3 rounded-xl bg-black border ${
+                      memberErr.year ? "border-red-500/60" : "border-green-400/30"
+                    }`}
+                    required
+                  >
+                    <option value="">Select Year</option>
+                    {YEARS.map((y) => (
+                      <option key={y} value={y}>
+                        {y} Year
+                      </option>
+                    ))}
+                  </select>
+                  {memberErr.year && <p className="text-xs text-red-400/90">{memberErr.year}</p>}
+                </div>
 
                 <div className="flex flex-col gap-1 md:col-span-2">
-                  <label className="text-[11px] text-green-300/60 tracking-widest">
-                    EMAIL ADDRESS
-                  </label>
+                  <label className="text-[11px] text-green-300/60 tracking-widest">EMAIL ADDRESS</label>
                   <input
                     type="email"
                     value={currentMember.email || ""}
@@ -460,9 +554,7 @@ const FormField = () => {
                     }`}
                     required
                   />
-                  {memberErr.email && (
-                    <p className="text-xs text-red-400/90">{memberErr.email}</p>
-                  )}
+                  {memberErr.email && <p className="text-xs text-red-400/90">{memberErr.email}</p>}
                 </div>
               </div>
 
@@ -476,9 +568,7 @@ const FormField = () => {
                   onClick={handleNext}
                   disabled={!canProceed}
                   className={`px-8 py-2 rounded-full font-bold tracking-widest transition ${
-                    canProceed
-                      ? "bg-green-400 text-black"
-                      : "bg-white/10 text-white/40 cursor-not-allowed"
+                    canProceed ? "bg-green-400 text-black" : "bg-white/10 text-white/40 cursor-not-allowed"
                   }`}
                 >
                   {currentIndex === teamSize ? "REVIEW TEAM" : "NEXT"}
@@ -492,12 +582,8 @@ const FormField = () => {
               <div className="space-y-8">
                 <div className="flex items-end justify-between gap-6">
                   <div>
-                    <h3 className="text-green-400 font-semibold tracking-widest">
-                      TEAM SUMMARY
-                    </h3>
-                    <p className="mt-2 text-sm text-green-300/60">
-                      Review the details before generating your ticket
-                    </p>
+                    <h3 className="text-green-400 font-semibold tracking-widest">TEAM SUMMARY</h3>
+                    <p className="mt-2 text-sm text-green-300/60">Review the details before generating your ticket</p>
                   </div>
 
                   <div className="hidden md:flex items-center gap-3 text-xs tracking-widest text-green-300/60">
@@ -530,7 +616,7 @@ const FormField = () => {
                               {i === 0 ? "Leader" : `Member ${i}`}
                             </div>
                             <div className="text-xs text-green-300/60 tracking-widest uppercase">
-                              {m.department || "—"}
+                              {(m.degree || "—") + (m.year ? ` • ${m.year} Year` : "")}
                             </div>
                           </div>
                         </div>
@@ -550,30 +636,32 @@ const FormField = () => {
                       <div className="relative mt-5 grid grid-cols-1 gap-3 text-sm">
                         <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
                           <span className="text-green-300/60">Name</span>
-                          <span className="text-green-100 text-right font-medium">
-                            {m.name || "—"}
-                          </span>
+                          <span className="text-green-100 text-right font-medium">{m.name || "—"}</span>
                         </div>
 
                         <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
                           <span className="text-green-300/60">College</span>
-                          <span className="text-green-100 text-right font-medium">
-                            {m.clg || "—"}
-                          </span>
+                          <span className="text-green-100 text-right font-medium">{m.clg || "—"}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
+                          <span className="text-green-300/60">Gender</span>
+                          <span className="text-green-100 text-right font-medium">{m.gender || "—"}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
+                          <span className="text-green-300/60">Degree</span>
+                          <span className="text-green-100 text-right font-medium">{m.degree || "—"}</span>
                         </div>
 
                         <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
                           <span className="text-green-300/60">Email</span>
-                          <span className="text-green-100 text-right font-medium break-all">
-                            {m.email || "—"}
-                          </span>
+                          <span className="text-green-100 text-right font-medium break-all">{m.email || "—"}</span>
                         </div>
 
                         <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
                           <span className="text-green-300/60">Mobile</span>
-                          <span className="text-green-100 text-right font-medium">
-                            {m.mobile || "—"}
-                          </span>
+                          <span className="text-green-100 text-right font-medium">{m.mobile || "—"}</span>
                         </div>
                       </div>
                     </div>
@@ -582,23 +670,25 @@ const FormField = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white rounded-xl p-4 text-center text-black">
-                  <p className="font-semibold">Scan & Pay</p>
+                <div className="bg-black/40 border border-green-400/20 rounded-2xl p-6 text-center text-white backdrop-blur-xl shadow-[0_0_60px_rgba(34,197,94,0.08)]">
+                  <p className="font-semibold tracking-widest text-green-300">SCAN & PAY</p>
                   <img
                     src={scanImg}
                     alt={`QR for team size ${teamSize || ""}`}
-                    className="mx-auto w-[260px] h-[300px] object-contain mt-2"
+                    className="mx-auto w-[260px] h-[300px] object-contain mt-3"
                   />
+                  <p className="mt-2 text-xs text-green-300/60 tracking-widest">UPLOAD SCREENSHOT AFTER PAYMENT</p>
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="relative border-2 border-dashed border-green-400/40 rounded-xl h-[360px] flex items-center justify-center cursor-pointer overflow-hidden">
+                  <label className="relative border border-green-400/20 bg-black/40 backdrop-blur-xl rounded-2xl h-[420px] flex items-center justify-center cursor-pointer overflow-hidden shadow-[0_0_60px_rgba(34,197,94,0.08)]">
                     {!paymentImage ? (
                       <div className="text-center">
-                        <h1 className="text-gray-400 text-sm tracking-widest">UPLOAD</h1>
-                        <span className="text-gray-400 text-sm tracking-widest">
-                          Payment Screenshot
-                        </span>
+                        <div className="mx-auto w-12 h-12 rounded-2xl border border-green-400/20 bg-white/5 flex items-center justify-center text-green-300 font-bold">
+                          ⇪
+                        </div>
+                        <h1 className="mt-3 text-green-300 text-sm tracking-widest">UPLOAD</h1>
+                        <span className="text-green-300/60 text-xs tracking-widest">PAYMENT SCREENSHOT</span>
                       </div>
                     ) : (
                       <img
@@ -621,17 +711,14 @@ const FormField = () => {
                       }}
                       required
                     />
+                    <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-green-500/10 via-transparent to-transparent" />
                   </label>
-                  {errors.paymentImage && (
-                    <p className="text-xs text-red-400/90">{errors.paymentImage}</p>
-                  )}
+                  {errors.paymentImage && <p className="text-xs text-red-400/90">{errors.paymentImage}</p>}
                 </div>
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="text-green-300 font-semibold tracking-widest">
-                  TRANSACTION ID:
-                </label>
+                <label className="text-green-300 font-semibold tracking-widest">TRANSACTION ID</label>
                 <input
                   value={transactionId}
                   onChange={(e) => {
@@ -650,9 +737,7 @@ const FormField = () => {
                   }`}
                   required
                 />
-                {errors.transactionId && (
-                  <p className="text-xs text-red-400/90">{errors.transactionId}</p>
-                )}
+                {errors.transactionId && <p className="text-xs text-red-400/90">{errors.transactionId}</p>}
               </div>
 
               <button
