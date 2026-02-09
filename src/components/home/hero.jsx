@@ -84,7 +84,7 @@ export default function Hero() {
               <div className="px-6 py-4 rounded-xl bg-white/5 border border-green-500 text-center shadow-[0_0_12px_rgba(34,197,94,0.9)]">
                 <FaCreditCard className="mx-auto mb-2 text-xl text-green-300" />
                 <p className="text-xs tracking-widest text-green-400">ENTRY FEE PER HEAD</p>
-                <p className="text-lg tracking-widest text-gray-400">₹200</p>
+                <p className="text-lg tracking-widest text-gray-400">₹300</p>
               </div>
             </div>
           </motion.div>
