@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Particles from "./particles";
 import Ticket from "./Ticket";
 import { api } from "../../../public/api.js";
@@ -7,10 +7,10 @@ import scanner4 from "../../assets/scanner-4.jpeg";
 import toast, { Toaster } from "react-hot-toast";
 
 const NAME_RE = /^[A-Za-z\s.'-]{2,60}$/;
-const REGNO_RE = /^[A-Za-z0-9._/-]{2,25}$/;
 const PHONE_RE = /^[6-9]\d{9}$/;
 const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 const TXN_RE = /^[A-Za-z0-9_-]{6,40}$/;
+const DEPT_RE = /^[A-Za-z\s&().,'-]{2,60}$/;
 
 const normalizeSpaces = (v) => v.replace(/\s+/g, " ").trim();
 
@@ -44,13 +44,29 @@ const FormField = () => {
     return scanner3;
   }, [teamSize]);
 
+  const loadingTexts = useMemo(
+    () => ["PLEASE WAIT MAY TAKE A WHILE", "DO NOT CLOSE THE TAB", "GENERATING TICKET"],
+    []
+  );
+  const [loadingTextIndex, setLoadingTextIndex] = useState(0);
+
+  useEffect(() => {
+    if (!loading) {
+      setLoadingTextIndex(0);
+      return;
+    }
+    const id = setInterval(() => {
+      setLoadingTextIndex((i) => (i + 1) % loadingTexts.length);
+    }, 900);
+    return () => clearInterval(id);
+  }, [loading, loadingTexts]);
+
   const validateTeamName = (v) => {
     const value = normalizeSpaces(v);
     if (!value) return "Team name is required";
     if (value.length < 2) return "Team name is too short";
     if (value.length > 60) return "Team name is too long";
-    if (!/^[A-Za-z0-9\s.'-]+$/.test(value))
-      return "Team name contains invalid characters";
+    if (!/^[A-Za-z0-9\s.'-]+$/.test(value)) return "Team name contains invalid characters";
     return "";
   };
 
@@ -66,6 +82,18 @@ const FormField = () => {
       return "";
     }
 
+    if (field === "clg") {
+      if (!value) return "College name is required";
+      if (value.length < 2) return "College name is too short";
+      if (value.length > 80) return "College name is too long";
+      return "";
+    }
+
+    if (field === "dept") {
+      if (!value) return "Department is required";
+      if (!DEPT_RE.test(value)) return "Enter a valid department";
+      return "";
+    }
 
     if (field === "email") {
       if (!value) return "Email is required";
@@ -134,6 +162,7 @@ const FormField = () => {
         role: i === 0 ? "Leader" : `Member ${i}`,
         name: "",
         clg: "",
+        dept: "",
         email: "",
         mobile: "",
         gender: "",
@@ -146,7 +175,7 @@ const FormField = () => {
   const handleChange = (field, value) => {
     let v = value;
 
-    if (field === "name" || field === "teamName") v = v.replace(/\s+/g, " ");
+    if (field === "name" || field === "teamName" || field === "clg" || field === "dept") v = v.replace(/\s+/g, " ");
     if (field === "mobile") v = v.replace(/[^\d]/g, "").slice(0, 10);
     if (field === "email") v = v.trim();
 
@@ -164,7 +193,7 @@ const FormField = () => {
   const validateCurrentMember = () => {
     const idx = currentIndex - 1;
     const m = members[idx];
-    const requiredFields = ["name", "clg", "email", "mobile", "gender", "degree", "year"];
+    const requiredFields = ["name", "clg", "dept", "email", "mobile", "gender", "degree", "year"];
 
     const fieldErrors = {};
     requiredFields.forEach((f) => {
@@ -257,6 +286,7 @@ const FormField = () => {
           ...m,
           name: normalizeSpaces(m.name),
           clg: normalizeSpaces(m.clg),
+          dept: normalizeSpaces(m.dept),
           email: (m.email || "").trim(),
           mobile: String(m.mobile || "").replace(/\s+/g, ""),
           gender: (m.gender || "").trim(),
@@ -305,7 +335,7 @@ const FormField = () => {
 
   const canProceed = useMemo(() => {
     if (!teamSize || !members.length) return false;
-    const req = ["name", "clg", "email", "mobile", "gender", "degree", "year"];
+    const req = ["name", "clg", "dept", "email", "mobile", "gender", "degree", "year"];
     return req.every((f) => !validateField(f, currentMember?.[f] ?? ""));
   }, [teamSize, members, currentIndex]);
 
@@ -327,10 +357,31 @@ const FormField = () => {
       />
 
       {loading && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80">
-          <div className="flex flex-col items-center gap-4">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/85">
+          <div className="flex flex-col items-center gap-4 px-6">
             <div className="w-14 h-14 rounded-full border-4 border-green-400 border-t-transparent animate-spin" />
-            <p className="text-green-300 tracking-widest text-sm">GENERATING TICKET</p>
+
+            <p className="text-green-300 tracking-[0.35em] text-sm text-center font-semibold">
+              {loadingTexts[loadingTextIndex]}
+            </p>
+
+            <div className="flex items-center gap-2">
+              <span
+                className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${
+                  loadingTextIndex === 0 ? "opacity-100" : "opacity-25"
+                }`}
+              />
+              <span
+                className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${
+                  loadingTextIndex === 1 ? "opacity-100" : "opacity-25"
+                }`}
+              />
+              <span
+                className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${
+                  loadingTextIndex === 2 ? "opacity-100" : "opacity-25"
+                }`}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -441,6 +492,24 @@ const FormField = () => {
                     required
                   />
                   {memberErr.clg && <p className="text-xs text-red-400/90">{memberErr.clg}</p>}
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-green-300/60 tracking-widest">DEPARTMENT</label>
+                  <input
+                    value={currentMember.dept || ""}
+                    onChange={(e) => handleChange("dept", e.target.value)}
+                    onBlur={() => {
+                      const msg = validateField("dept", currentMember.dept || "");
+                      if (msg) setMemberError("dept", msg);
+                      else clearMemberError("dept");
+                    }}
+                    className={`p-3 rounded-xl bg-transparent border ${
+                      memberErr.dept ? "border-red-500/60" : "border-green-400/30"
+                    }`}
+                    required
+                  />
+                  {memberErr.dept && <p className="text-xs text-red-400/90">{memberErr.dept}</p>}
                 </div>
 
                 <div className="flex flex-col gap-1">
@@ -642,6 +711,11 @@ const FormField = () => {
                         <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
                           <span className="text-green-300/60">College</span>
                           <span className="text-green-100 text-right font-medium">{m.clg || "—"}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
+                          <span className="text-green-300/60">Department</span>
+                          <span className="text-green-100 text-right font-medium">{m.dept || "—"}</span>
                         </div>
 
                         <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
