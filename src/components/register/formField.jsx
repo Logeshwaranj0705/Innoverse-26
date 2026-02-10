@@ -57,7 +57,7 @@ const FormField = () => {
     }
     const id = setInterval(() => {
       setLoadingTextIndex((i) => (i + 1) % loadingTexts.length);
-    }, 900);
+    }, 1900);
     return () => clearInterval(id);
   }, [loading, loadingTexts]);
 
