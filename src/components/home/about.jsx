@@ -106,7 +106,7 @@ export default function About() {
                 NATIONAL-LEVEL
               </h3>
               <p className="text-gray-400 tracking-widest text-sm">
-                OPEN TO ALL
+                NATIONWIDE CHALLENGE
               </p>
             </motion.div>
 
