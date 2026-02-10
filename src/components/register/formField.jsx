@@ -12,11 +12,14 @@ const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 const TXN_RE = /^[A-Za-z0-9_-]{6,40}$/;
 const DEPT_RE = /^[A-Za-z\s&().,'-]{2,60}$/;
 
-const normalizeSpaces = (v) => v.replace(/\s+/g, " ").trim();
+const normalizeSpaces = (v) => String(v || "").replace(/\s+/g, " ").trim();
+const normLower = (v) => normalizeSpaces(v).toLowerCase();
 
 const YEARS = ["1", "2", "3", "4"];
 const GENDERS = ["Male", "Female", "Other"];
 const DEGREES = ["B.E", "B.Tech", "B.Sc", "BCA", "M.E", "M.Tech", "M.Sc", "MCA", "MBA", "PhD", "Other"];
+
+const SATHYABAMA = "Sathyabama Institute of Science and Technology";
 
 const FormField = () => {
   const [teamName, setTeamName] = useState("");
@@ -29,6 +32,8 @@ const FormField = () => {
   const [showTicket, setShowTicket] = useState(false);
   const [ticketData, setTicketData] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const [satState, setSatState] = useState({ loading: false, filled: false, count: 0, limit: 0 });
 
   const [errors, setErrors] = useState({
     teamName: "",
@@ -44,10 +49,7 @@ const FormField = () => {
     return scanner3;
   }, [teamSize]);
 
-  const loadingTexts = useMemo(
-    () => ["PLEASE WAIT MAY TAKE A WHILE", "DO NOT CLOSE THE TAB", "GENERATING TICKET"],
-    []
-  );
+  const loadingTexts = useMemo(() => ["PLEASE WAIT MAY TAKE A WHILE", "DO NOT CLOSE THE TAB", "GENERATING TICKET"], []);
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
 
   useEffect(() => {
@@ -74,30 +76,36 @@ const FormField = () => {
     const value =
       field === "mobile" || field === "email"
         ? String(rawValue || "").trim()
-        : normalizeSpaces(String(rawValue || ""));
+        : String(rawValue || "");
 
     if (field === "name") {
-      if (!value) return "Full name is required";
-      if (!NAME_RE.test(value)) return "Name must contain only letters and spaces";
+      const v = normalizeSpaces(value);
+      if (!v) return "Full name is required";
+      if (!NAME_RE.test(v)) return "Name must contain only letters and spaces";
       return "";
     }
 
     if (field === "clg") {
-      if (!value) return "College name is required";
-      if (value.length < 2) return "College name is too short";
-      if (value.length > 80) return "College name is too long";
+      const clean = normalizeSpaces(value);
+      if (!clean) return "College name is required";
+      if (clean.length < 2) return "College name is too short";
+      if (clean.length > 120) return "College name is too long";
+      if (normLower(clean) === normLower(SATHYABAMA))
+        return "Type a different college (Sathyabama must be selected from dropdown)";
       return "";
     }
 
     if (field === "dept") {
-      if (!value) return "Department is required";
-      if (!DEPT_RE.test(value)) return "Enter a valid department";
+      const v = normalizeSpaces(value);
+      if (!v) return "Department is required";
+      if (!DEPT_RE.test(v)) return "Enter a valid department";
       return "";
     }
 
     if (field === "email") {
-      if (!value) return "Email is required";
-      if (!EMAIL_RE.test(value)) return "Enter a valid email address";
+      const v = String(rawValue || "").trim();
+      if (!v) return "Email is required";
+      if (!EMAIL_RE.test(v)) return "Enter a valid email address";
       return "";
     }
 
@@ -109,20 +117,23 @@ const FormField = () => {
     }
 
     if (field === "gender") {
-      if (!value) return "Gender is required";
-      if (!GENDERS.includes(value)) return "Select a valid gender";
+      const v = normalizeSpaces(value);
+      if (!v) return "Gender is required";
+      if (!GENDERS.includes(v)) return "Select a valid gender";
       return "";
     }
 
     if (field === "degree") {
-      if (!value) return "Degree is required";
-      if (!DEGREES.includes(value)) return "Select a valid degree";
+      const v = normalizeSpaces(value);
+      if (!v) return "Degree is required";
+      if (!DEGREES.includes(v)) return "Select a valid degree";
       return "";
     }
 
     if (field === "year") {
-      if (!value) return "Year is required";
-      if (!YEARS.includes(value)) return "Select a valid year";
+      const v = normalizeSpaces(value);
+      if (!v) return "Year is required";
+      if (!YEARS.includes(v)) return "Select a valid year";
       return "";
     }
 
@@ -144,12 +155,33 @@ const FormField = () => {
     });
   };
 
+  const fetchSathyabamaStatus = async () => {
+    try {
+      setSatState((p) => ({ ...p, loading: true }));
+      const res = await fetch(`${api}/slots/sathyabama`);
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) throw new Error(data?.error || "Failed to check slots");
+      setSatState({
+        loading: false,
+        filled: !!data.filled,
+        count: Number(data.count || 0),
+        limit: Number(data.limit || 0),
+      });
+      return !!data.filled;
+    } catch (e) {
+      setSatState((p) => ({ ...p, loading: false }));
+      toast.error(e?.message || "Unable to check Sathyabama slots");
+      return false;
+    }
+  };
+
   const handleTeamSize = (size) => {
     setTeamSize(size);
     setCurrentIndex(1);
     setShowSummary(false);
     setPaymentImage(null);
     setTransactionId("");
+    setSatState({ loading: false, filled: false, count: 0, limit: 0 });
     setErrors({ teamName: "", teamSize: "", member: {}, transactionId: "", paymentImage: "" });
 
     if (!size) {
@@ -161,6 +193,7 @@ const FormField = () => {
       Array.from({ length: size }, (_, i) => ({
         role: i === 0 ? "Leader" : `Member ${i}`,
         name: "",
+        clgMode: "",
         clg: "",
         dept: "",
         email: "",
@@ -175,7 +208,7 @@ const FormField = () => {
   const handleChange = (field, value) => {
     let v = value;
 
-    if (field === "name" || field === "teamName" || field === "clg" || field === "dept") v = v.replace(/\s+/g, " ");
+    if (field === "name" || field === "teamName" || field === "dept") v = v.replace(/\s+/g, " ");
     if (field === "mobile") v = v.replace(/[^\d]/g, "").slice(0, 10);
     if (field === "email") v = v.trim();
 
@@ -190,6 +223,56 @@ const FormField = () => {
     else clearMemberError(field);
   };
 
+  const handleCollegeMode = async (mode) => {
+    const updated = [...members];
+    const idx = currentIndex - 1;
+    if (!updated[idx]) return;
+
+    updated[idx].clgMode = mode;
+
+    if (mode === "SIST") {
+      const filled = await fetchSathyabamaStatus();
+      if (filled) {
+        updated[idx].clgMode = "";
+        updated[idx].clg = "";
+        setMembers(updated);
+        setMemberError("clg", "Slot filled for Sathyabama");
+        toast.error("Slot filled for Sathyabama");
+        return;
+      }
+      updated[idx].clg = SATHYABAMA;
+      setMembers(updated);
+      clearMemberError("clg");
+      return;
+    }
+
+    if (mode === "OTHER") {
+      updated[idx].clg = "";
+      setMembers(updated);
+      const msg = validateField("clg", "");
+      if (msg) setMemberError("clg", msg);
+      return;
+    }
+
+    updated[idx].clg = "";
+    setMembers(updated);
+    const msg = validateField("clg", "");
+    if (msg) setMemberError("clg", msg);
+  };
+
+  const handleOtherCollege = (val) => {
+    const updated = [...members];
+    const idx = currentIndex - 1;
+    if (!updated[idx]) return;
+
+    updated[idx].clg = val;
+    setMembers(updated);
+
+    const msg = validateField("clg", val);
+    if (msg) setMemberError("clg", msg);
+    else clearMemberError("clg");
+  };
+
   const validateCurrentMember = () => {
     const idx = currentIndex - 1;
     const m = members[idx];
@@ -201,11 +284,13 @@ const FormField = () => {
       if (msg) fieldErrors[f] = msg;
     });
 
+    if (!m?.clgMode) fieldErrors.clg = fieldErrors.clg || "Select college option";
+
     setErrors((prev) => ({ ...prev, member: fieldErrors }));
     return Object.keys(fieldErrors).length === 0;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     const tnErr = validateTeamName(teamName);
     if (tnErr) {
       setErrors((prev) => ({ ...prev, teamName: tnErr }));
@@ -221,6 +306,22 @@ const FormField = () => {
       return;
     } else {
       setErrors((prev) => ({ ...prev, teamSize: "" }));
+    }
+
+    const idx = currentIndex - 1;
+    const m = members[idx];
+
+    if (m?.clgMode === "SIST") {
+      const filled = await fetchSathyabamaStatus();
+      if (filled) {
+        const updated = [...members];
+        updated[idx].clgMode = "";
+        updated[idx].clg = "";
+        setMembers(updated);
+        setMemberError("clg", "Slot filled for Sathyabama");
+        toast.error("Slot filled for Sathyabama");
+        return;
+      }
     }
 
     if (!validateCurrentMember()) {
@@ -247,22 +348,43 @@ const FormField = () => {
     if (!tx) txnErr = "Transaction ID is required";
     else if (!TXN_RE.test(tx)) txnErr = "Transaction ID looks invalid";
 
+    const sathyabamaTypedInOther = members.some(
+      (m) => m?.clgMode === "OTHER" && normLower(m?.clg) === normLower(SATHYABAMA)
+    );
+    const leaderIsSathyabama = normLower(members?.[0]?.clg) === normLower(SATHYABAMA);
+
+    let clgErr = "";
+    if (sathyabamaTypedInOther) clgErr = "Do not type Sathyabama in Other college field";
+    if (leaderIsSathyabama && satState.filled) clgErr = "Slot filled for Sathyabama";
+
     setErrors((prev) => ({
       ...prev,
       teamName: tnErr,
       transactionId: txnErr,
       paymentImage: imgErr,
+      member: clgErr ? { ...(prev.member || {}), clg: clgErr } : prev.member,
     }));
 
     if (tnErr) toast.error(tnErr);
     if (imgErr) toast.error(imgErr);
     if (txnErr) toast.error(txnErr);
+    if (clgErr) toast.error(clgErr);
 
-    return !tnErr && !txnErr && !imgErr;
+    return !tnErr && !txnErr && !imgErr && !clgErr;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const leaderIsSathyabama = normLower(members?.[0]?.clg) === normLower(SATHYABAMA);
+    if (leaderIsSathyabama) {
+      const filled = await fetchSathyabamaStatus();
+      if (filled) {
+        toast.error("Slot filled for Sathyabama");
+        return;
+      }
+    }
+
     if (!validateSummary()) return;
 
     try {
@@ -332,12 +454,16 @@ const FormField = () => {
 
   const memberErr = errors.member || {};
   const currentMember = members[currentIndex - 1] || {};
+  const isSistSelected = normLower(currentMember?.clg) === normLower(SATHYABAMA);
 
   const canProceed = useMemo(() => {
     if (!teamSize || !members.length) return false;
     const req = ["name", "clg", "dept", "email", "mobile", "gender", "degree", "year"];
-    return req.every((f) => !validateField(f, currentMember?.[f] ?? ""));
-  }, [teamSize, members, currentIndex]);
+    const fieldsOk = req.every((f) => !validateField(f, currentMember?.[f] ?? ""));
+    if (!currentMember?.clgMode) return false;
+    if (currentMember?.clgMode === "SIST" && satState.filled) return false;
+    return fieldsOk;
+  }, [teamSize, members, currentIndex, satState.filled]);
 
   if (showTicket && ticketData) return <Ticket data={ticketData} />;
 
@@ -360,27 +486,13 @@ const FormField = () => {
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/85">
           <div className="flex flex-col items-center gap-4 px-6">
             <div className="w-14 h-14 rounded-full border-4 border-green-400 border-t-transparent animate-spin" />
-
             <p className="text-green-300 tracking-[0.35em] text-sm text-center font-semibold">
               {loadingTexts[loadingTextIndex]}
             </p>
-
             <div className="flex items-center gap-2">
-              <span
-                className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${
-                  loadingTextIndex === 0 ? "opacity-100" : "opacity-25"
-                }`}
-              />
-              <span
-                className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${
-                  loadingTextIndex === 1 ? "opacity-100" : "opacity-25"
-                }`}
-              />
-              <span
-                className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${
-                  loadingTextIndex === 2 ? "opacity-100" : "opacity-25"
-                }`}
-              />
+              <span className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${loadingTextIndex === 0 ? "opacity-100" : "opacity-25"}`} />
+              <span className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${loadingTextIndex === 1 ? "opacity-100" : "opacity-25"}`} />
+              <span className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${loadingTextIndex === 2 ? "opacity-100" : "opacity-25"}`} />
             </div>
           </div>
         </div>
@@ -415,9 +527,7 @@ const FormField = () => {
                     const msg = validateTeamName(v);
                     setErrors((prev) => ({ ...prev, teamName: msg }));
                   }}
-                  className={`p-3 rounded-xl bg-transparent border ${
-                    errors.teamName ? "border-red-500/60" : "border-green-400/30"
-                  }`}
+                  className={`p-3 rounded-xl bg-transparent border ${errors.teamName ? "border-red-500/60" : "border-green-400/30"}`}
                   required
                 />
                 {errors.teamName && <p className="text-xs text-red-400/90">{errors.teamName}</p>}
@@ -428,9 +538,7 @@ const FormField = () => {
                 <select
                   value={teamSize}
                   onChange={(e) => handleTeamSize(Number(e.target.value))}
-                  className={`p-3 rounded-xl bg-black border ${
-                    errors.teamSize ? "border-red-500/60" : "border-green-400/30"
-                  }`}
+                  className={`p-3 rounded-xl bg-black border ${errors.teamSize ? "border-red-500/60" : "border-green-400/30"}`}
                   required
                 >
                   <option value="">Select Team Size</option>
@@ -468,9 +576,7 @@ const FormField = () => {
                       if (msg) setMemberError("name", msg);
                       else clearMemberError("name");
                     }}
-                    className={`p-3 rounded-xl bg-transparent border ${
-                      memberErr.name ? "border-red-500/60" : "border-green-400/30"
-                    }`}
+                    className={`p-3 rounded-xl bg-transparent border ${memberErr.name ? "border-red-500/60" : "border-green-400/30"}`}
                     required
                   />
                   {memberErr.name && <p className="text-xs text-red-400/90">{memberErr.name}</p>}
@@ -486,9 +592,7 @@ const FormField = () => {
                       if (msg) setMemberError("dept", msg);
                       else clearMemberError("dept");
                     }}
-                    className={`p-3 rounded-xl bg-transparent border ${
-                      memberErr.dept ? "border-red-500/60" : "border-green-400/30"
-                    }`}
+                    className={`p-3 rounded-xl bg-transparent border ${memberErr.dept ? "border-red-500/60" : "border-green-400/30"}`}
                     required
                   />
                   {memberErr.dept && <p className="text-xs text-red-400/90">{memberErr.dept}</p>}
@@ -506,9 +610,7 @@ const FormField = () => {
                       if (msg) setMemberError("mobile", msg);
                       else clearMemberError("mobile");
                     }}
-                    className={`p-3 rounded-xl bg-transparent border ${
-                      memberErr.mobile ? "border-red-500/60" : "border-green-400/30"
-                    }`}
+                    className={`p-3 rounded-xl bg-transparent border ${memberErr.mobile ? "border-red-500/60" : "border-green-400/30"}`}
                     required
                   />
                   {memberErr.mobile && <p className="text-xs text-red-400/90">{memberErr.mobile}</p>}
@@ -516,11 +618,7 @@ const FormField = () => {
 
                 <div className="flex flex-col gap-2">
                   <label className="text-[11px] text-green-300/60 tracking-widest">GENDER</label>
-                  <div
-                    className={`rounded-xl border p-3 ${
-                      memberErr.gender ? "border-red-500/60" : "border-green-400/30"
-                    }`}
-                  >
+                  <div className={`rounded-xl border p-3 ${memberErr.gender ? "border-red-500/60" : "border-green-400/30"}`}>
                     <div className="flex flex-wrap gap-4">
                       {GENDERS.map((g) => (
                         <label key={g} className="flex items-center gap-2 text-sm text-green-100/90 cursor-pointer">
@@ -549,9 +647,7 @@ const FormField = () => {
                       if (msg) setMemberError("degree", msg);
                       else clearMemberError("degree");
                     }}
-                    className={`p-3 rounded-xl bg-black border ${
-                      memberErr.degree ? "border-red-500/60" : "border-green-400/30"
-                    }`}
+                    className={`p-3 rounded-xl bg-black border ${memberErr.degree ? "border-red-500/60" : "border-green-400/30"}`}
                     required
                   >
                     <option value="">Select Degree</option>
@@ -574,9 +670,7 @@ const FormField = () => {
                       if (msg) setMemberError("year", msg);
                       else clearMemberError("year");
                     }}
-                    className={`p-3 rounded-xl bg-black border ${
-                      memberErr.year ? "border-red-500/60" : "border-green-400/30"
-                    }`}
+                    className={`p-3 rounded-xl bg-black border ${memberErr.year ? "border-red-500/60" : "border-green-400/30"}`}
                     required
                   >
                     <option value="">Select Year</option>
@@ -590,20 +684,44 @@ const FormField = () => {
                 </div>
 
                 <div className="flex flex-col gap-1 md:col-span-2">
-                  <label className="text-[11px] text-green-300/60 tracking-widest">COLLEGE NAME</label>
-                  <input
-                    value={currentMember.clg || ""}
-                    onChange={(e) => handleChange("clg", e.target.value)}
-                    onBlur={() => {
-                      const msg = validateField("clg", currentMember.clg || "");
-                      if (msg) setMemberError("clg", msg);
-                      else clearMemberError("clg");
-                    }}
-                    className={`p-3 rounded-xl bg-transparent border ${
-                      memberErr.clg ? "border-red-500/60" : "border-green-400/30"
-                    }`}
+                  <label className="text-[11px] text-green-300/60 tracking-widest">COLLEGE</label>
+
+                  <select
+                    value={currentMember.clgMode || ""}
+                    onChange={(e) => handleCollegeMode(e.target.value)}
+                    className={`p-3 rounded-xl bg-black border ${memberErr.clg ? "border-red-500/60" : "border-green-400/30"}`}
                     required
-                  />
+                  >
+                    <option value="">Select College</option>
+                    <option value="SIST">
+                      {SATHYABAMA}
+                      {satState.limit ? ` (${satState.count}/${satState.limit})` : ""}
+                      {satState.filled ? " - SLOT FILLED" : ""}
+                    </option>
+                    <option value="OTHER">Others</option>
+                  </select>
+
+                  {currentMember.clgMode === "OTHER" && (
+                    <input
+                      value={currentMember.clg || ""}
+                      onChange={(e) => handleOtherCollege(e.target.value)}
+                      onBlur={() => {
+                        const msg = validateField("clg", currentMember.clg || "");
+                        if (msg) setMemberError("clg", msg);
+                        else clearMemberError("clg");
+                      }}
+                      placeholder="Enter your college name"
+                      className={`mt-3 p-3 rounded-xl bg-transparent border ${memberErr.clg ? "border-red-500/60" : "border-green-400/30"}`}
+                      required
+                    />
+                  )}
+
+                  {currentMember.clgMode === "SIST" && (
+                    <div className="mt-2 text-xs text-green-300/60 tracking-widest">
+                      {satState.loading ? "Checking slots..." : isSistSelected ? "Selected: Sathyabama" : ""}
+                    </div>
+                  )}
+
                   {memberErr.clg && <p className="text-xs text-red-400/90">{memberErr.clg}</p>}
                 </div>
 
@@ -618,9 +736,7 @@ const FormField = () => {
                       if (msg) setMemberError("email", msg);
                       else clearMemberError("email");
                     }}
-                    className={`p-3 rounded-xl bg-transparent border ${
-                      memberErr.email ? "border-red-500/60" : "border-green-400/30"
-                    }`}
+                    className={`p-3 rounded-xl bg-transparent border ${memberErr.email ? "border-red-500/60" : "border-green-400/30"}`}
                     required
                   />
                   {memberErr.email && <p className="text-xs text-red-400/90">{memberErr.email}</p>}
@@ -656,12 +772,8 @@ const FormField = () => {
                   </div>
 
                   <div className="hidden md:flex items-center gap-3 text-xs tracking-widest text-green-300/60">
-                    <span className="px-3 py-1 rounded-full border border-green-400/20 bg-white/5">
-                      TEAM: {teamName || "—"}
-                    </span>
-                    <span className="px-3 py-1 rounded-full border border-green-400/20 bg-white/5">
-                      SIZE: {teamSize || "—"}
-                    </span>
+                    <span className="px-3 py-1 rounded-full border border-green-400/20 bg-white/5">TEAM: {teamName || "—"}</span>
+                    <span className="px-3 py-1 rounded-full border border-green-400/20 bg-white/5">SIZE: {teamSize || "—"}</span>
                   </div>
                 </div>
 
@@ -681,9 +793,7 @@ const FormField = () => {
                           </div>
 
                           <div>
-                            <div className="text-green-200 font-semibold tracking-wide">
-                              {i === 0 ? "Leader" : `Member ${i}`}
-                            </div>
+                            <div className="text-green-200 font-semibold tracking-wide">{i === 0 ? "Leader" : `Member ${i}`}</div>
                             <div className="text-xs text-green-300/60 tracking-widest uppercase">
                               {(m.degree || "—") + (m.year ? ` • ${m.year} Year` : "")}
                             </div>
@@ -710,7 +820,7 @@ const FormField = () => {
 
                         <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
                           <span className="text-green-300/60">College</span>
-                          <span className="text-green-100 text-right font-medium">{m.clg || "—"}</span>
+                          <span className="text-green-100 text-right font-medium">{normalizeSpaces(m.clg) || "—"}</span>
                         </div>
 
                         <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
@@ -746,11 +856,7 @@ const FormField = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-black/40 border border-green-400/20 rounded-2xl p-6 text-center text-white backdrop-blur-xl shadow-[0_0_60px_rgba(34,197,94,0.08)]">
                   <p className="font-semibold tracking-widest text-green-300">SCAN & PAY</p>
-                  <img
-                    src={scanImg}
-                    alt={`QR for team size ${teamSize || ""}`}
-                    className="mx-auto w-[260px] h-[300px] object-contain mt-3"
-                  />
+                  <img src={scanImg} alt={`QR for team size ${teamSize || ""}`} className="mx-auto w-[260px] h-[300px] object-contain mt-3" />
                   <p className="mt-2 text-xs text-green-300/60 tracking-widest">UPLOAD SCREENSHOT AFTER PAYMENT</p>
                 </div>
 
@@ -765,11 +871,7 @@ const FormField = () => {
                         <span className="text-green-300/60 text-xs tracking-widest">PAYMENT SCREENSHOT</span>
                       </div>
                     ) : (
-                      <img
-                        src={URL.createObjectURL(paymentImage)}
-                        alt="Uploaded"
-                        className="absolute inset-0 w-full h-full object-cover"
-                      />
+                      <img src={URL.createObjectURL(paymentImage)} alt="Uploaded" className="absolute inset-0 w-full h-full object-cover" />
                     )}
                     <input
                       type="file"
@@ -806,9 +908,7 @@ const FormField = () => {
                     setErrors((prev) => ({ ...prev, transactionId: msg }));
                   }}
                   placeholder="Payment Transaction ID"
-                  className={`p-3 w-full rounded-xl bg-transparent border text-sm ${
-                    errors.transactionId ? "border-red-500/60" : "border-green-400/30"
-                  }`}
+                  className={`p-3 w-full rounded-xl bg-transparent border text-sm ${errors.transactionId ? "border-red-500/60" : "border-green-400/30"}`}
                   required
                 />
                 {errors.transactionId && <p className="text-xs text-red-400/90">{errors.transactionId}</p>}
