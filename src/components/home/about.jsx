@@ -40,7 +40,7 @@ export default function About() {
 
           <p className="mt-6 text-gray-300 leading-relaxed text-sm">
             <span className="text-green-400 font-semibold">INNOVERSE ’26</span> is a
-            24-hour national-level hackathon organized by the{" "}
+            24-hour's national-level hackathon organized by the{" "}
             <span className="text-green-300">
               Department of Information Technology
             </span>
