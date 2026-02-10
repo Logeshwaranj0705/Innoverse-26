@@ -1,3 +1,4 @@
+// Ticket.jsx
 import React, { useRef } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import jsPDF from "jspdf";
@@ -9,7 +10,7 @@ const Ticket = ({ data }) => {
   const ticketId = data?.ticketId || `INV26-${Date.now()}`;
 
   const memberLine = (m, i) =>
-    `${i + 1}. ${m.name} | ${m.clg} | ${m.degree} | ${m.year} Year | ${m.mobile} | ${m.email}`;
+    `${i + 1}. ${m.name} | ${m.clg} | ${m.dept} | ${m.degree} | ${m.year} Year | ${m.mobile} | ${m.email}`;
 
   const qrText = `
 INNOVERSE 26 ENTRY PASS
