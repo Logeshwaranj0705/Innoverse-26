@@ -39,7 +39,7 @@ export default function Hero() {
             <motion.p
               className="mt-5 ml-2 tracking-[0.3em] text-sm text-gray-300"
             >
-              24-HOUR NATIONAL-LEVEL HACKATHON
+              24-HOUR'S NATIONAL-LEVEL HACKATHON
             </motion.p>
 
             <div className="mt-14">
