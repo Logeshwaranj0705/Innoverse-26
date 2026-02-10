@@ -477,24 +477,6 @@ const FormField = () => {
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <label className="text-[11px] text-green-300/60 tracking-widest">COLLEGE NAME</label>
-                  <input
-                    value={currentMember.clg || ""}
-                    onChange={(e) => handleChange("clg", e.target.value)}
-                    onBlur={() => {
-                      const msg = validateField("clg", currentMember.clg || "");
-                      if (msg) setMemberError("clg", msg);
-                      else clearMemberError("clg");
-                    }}
-                    className={`p-3 rounded-xl bg-transparent border ${
-                      memberErr.clg ? "border-red-500/60" : "border-green-400/30"
-                    }`}
-                    required
-                  />
-                  {memberErr.clg && <p className="text-xs text-red-400/90">{memberErr.clg}</p>}
-                </div>
-
-                <div className="flex flex-col gap-1">
                   <label className="text-[11px] text-green-300/60 tracking-widest">DEPARTMENT</label>
                   <input
                     value={currentMember.dept || ""}
@@ -605,6 +587,24 @@ const FormField = () => {
                     ))}
                   </select>
                   {memberErr.year && <p className="text-xs text-red-400/90">{memberErr.year}</p>}
+                </div>
+
+                <div className="flex flex-col gap-1 md:col-span-2">
+                  <label className="text-[11px] text-green-300/60 tracking-widest">COLLEGE NAME</label>
+                  <input
+                    value={currentMember.clg || ""}
+                    onChange={(e) => handleChange("clg", e.target.value)}
+                    onBlur={() => {
+                      const msg = validateField("clg", currentMember.clg || "");
+                      if (msg) setMemberError("clg", msg);
+                      else clearMemberError("clg");
+                    }}
+                    className={`p-3 rounded-xl bg-transparent border ${
+                      memberErr.clg ? "border-red-500/60" : "border-green-400/30"
+                    }`}
+                    required
+                  />
+                  {memberErr.clg && <p className="text-xs text-red-400/90">{memberErr.clg}</p>}
                 </div>
 
                 <div className="flex flex-col gap-1 md:col-span-2">
