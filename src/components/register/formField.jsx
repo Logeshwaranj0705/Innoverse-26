@@ -158,7 +158,7 @@ export default function FormField() {
 
   const fetchSathyabamaStatus = async () => {
     try {
-      setSatState({ loading: true, filled: false, count: 0, limit: 0 });
+      setSatState((p) => ({ ...p, loading: true }));
 
       const res = await fetch(`${api}/slots/sathyabama`);
       const data = await res.json().catch(() => null);
@@ -216,7 +216,7 @@ export default function FormField() {
   const handleChange = (field, value) => {
     let v = value;
 
-    if (field === "name" || field === "teamName" || field === "dept") v = v.replace(/\s+/g, " ");
+    if (field === "name" || field === "dept") v = v.replace(/\s+/g, " ");
     if (field === "mobile") v = v.replace(/[^\d]/g, "").slice(0, 10);
     if (field === "email") v = v.trim();
 
@@ -240,33 +240,32 @@ export default function FormField() {
     updated[idx].clgMode = mode;
 
     if (mode === "SIST") {
-      const filled = await fetchSathyabamaStatus();
-      if (filled) {
-        updated[idx].clgMode = "";
-        updated[idx].clg = "";
-        setMembers(updated);
-        setMemberError("clg", "Slot filled for Sathyabama");
-        toast.error("Slot filled for Sathyabama");
-        return;
-      }
       updated[idx].clg = SATHYABAMA;
       setMembers(updated);
       clearMemberError("clg");
+
+      const filled = await fetchSathyabamaStatus();
+      if (filled) {
+        const u2 = [...updated];
+        u2[idx].clgMode = "";
+        u2[idx].clg = "";
+        setMembers(u2);
+        setMemberError("clg", "Slot filled for Sathyabama");
+        toast.error("Slot filled for Sathyabama");
+      }
       return;
     }
 
     if (mode === "OTHER") {
       updated[idx].clg = "";
       setMembers(updated);
-      const msg = validateField("clg", "", updated[idx]);
-      if (msg) setMemberError("clg", msg);
+      setMemberError("clg", "College name is required");
       return;
     }
 
     updated[idx].clg = "";
     setMembers(updated);
-    const msg = validateField("clg", "", updated[idx]);
-    if (msg) setMemberError("clg", msg);
+    setMemberError("clg", "Select college option");
   };
 
   const handleOtherCollege = (val) => {
@@ -435,21 +434,13 @@ export default function FormField() {
         body: JSON.stringify(payload),
       });
 
-      let data = null;
-      try {
-        data = await res.json();
-      } catch {
-        data = null;
-      }
+      const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        const msg = data?.error || data?.message || `Server error (${res.status}). Please try again.`;
-        throw new Error(msg);
+        throw new Error(data?.error || data?.message || `Server error (${res.status}). Please try again.`);
       }
 
-      if (!data?.success) {
-        throw new Error(data?.error || "Registration failed");
-      }
+      if (!data?.success) throw new Error(data?.error || "Registration failed");
 
       toast.success("Registration successful 🎉");
       setTicketData(data.data);
@@ -464,16 +455,6 @@ export default function FormField() {
   const memberErr = errors.member || {};
   const currentMember = members[currentIndex - 1] || {};
   const isSistSelected = normLower(currentMember?.clg) === normLower(SATHYABAMA);
-
-  const canProceed = useMemo(() => {
-    if (!sizeNum || !members.length) return false;
-    const req = ["name", "clg", "dept", "email", "mobile", "gender", "degree", "year"];
-    const fieldsOk = req.every((f) => !validateField(f, currentMember?.[f] ?? "", currentMember));
-    if (!currentMember?.clgMode) return false;
-    if (currentMember?.clgMode === "SIST" && satState.loading) return false;
-    if (currentMember?.clgMode === "SIST" && satState.filled) return false;
-    return fieldsOk;
-  }, [sizeNum, members.length, currentIndex, satState.loading, satState.filled, currentMember]);
 
   if (showTicket && ticketData) return <Ticket data={ticketData} />;
 
@@ -500,21 +481,9 @@ export default function FormField() {
               {loadingTexts[loadingTextIndex]}
             </p>
             <div className="flex items-center gap-2">
-              <span
-                className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${
-                  loadingTextIndex === 0 ? "opacity-100" : "opacity-25"
-                }`}
-              />
-              <span
-                className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${
-                  loadingTextIndex === 1 ? "opacity-100" : "opacity-25"
-                }`}
-              />
-              <span
-                className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${
-                  loadingTextIndex === 2 ? "opacity-100" : "opacity-25"
-                }`}
-              />
+              <span className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${loadingTextIndex === 0 ? "opacity-100" : "opacity-25"}`} />
+              <span className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${loadingTextIndex === 1 ? "opacity-100" : "opacity-25"}`} />
+              <span className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${loadingTextIndex === 2 ? "opacity-100" : "opacity-25"}`} />
             </div>
           </div>
         </div>
@@ -597,11 +566,6 @@ export default function FormField() {
                   <input
                     value={currentMember.name || ""}
                     onChange={(e) => handleChange("name", e.target.value)}
-                    onBlur={() => {
-                      const msg = validateField("name", currentMember.name || "", currentMember);
-                      if (msg) setMemberError("name", msg);
-                      else clearMemberError("name");
-                    }}
                     className={`p-3 rounded-xl bg-transparent border ${
                       memberErr.name ? "border-red-500/60" : "border-green-400/30"
                     }`}
@@ -615,11 +579,6 @@ export default function FormField() {
                   <input
                     value={currentMember.dept || ""}
                     onChange={(e) => handleChange("dept", e.target.value)}
-                    onBlur={() => {
-                      const msg = validateField("dept", currentMember.dept || "", currentMember);
-                      if (msg) setMemberError("dept", msg);
-                      else clearMemberError("dept");
-                    }}
                     className={`p-3 rounded-xl bg-transparent border ${
                       memberErr.dept ? "border-red-500/60" : "border-green-400/30"
                     }`}
@@ -635,11 +594,6 @@ export default function FormField() {
                     type="tel"
                     value={currentMember.mobile || ""}
                     onChange={(e) => handleChange("mobile", e.target.value)}
-                    onBlur={() => {
-                      const msg = validateField("mobile", currentMember.mobile || "", currentMember);
-                      if (msg) setMemberError("mobile", msg);
-                      else clearMemberError("mobile");
-                    }}
                     className={`p-3 rounded-xl bg-transparent border ${
                       memberErr.mobile ? "border-red-500/60" : "border-green-400/30"
                     }`}
@@ -650,11 +604,7 @@ export default function FormField() {
 
                 <div className="flex flex-col gap-2">
                   <label className="text-[11px] text-green-300/60 tracking-widest">GENDER</label>
-                  <div
-                    className={`rounded-xl border p-3 ${
-                      memberErr.gender ? "border-red-500/60" : "border-green-400/30"
-                    }`}
-                  >
+                  <div className={`rounded-xl border p-3 ${memberErr.gender ? "border-red-500/60" : "border-green-400/30"}`}>
                     <div className="flex flex-wrap gap-4">
                       {GENDERS.map((g) => (
                         <label key={g} className="flex items-center gap-2 text-sm text-green-100/90 cursor-pointer">
@@ -678,11 +628,6 @@ export default function FormField() {
                   <select
                     value={currentMember.degree || ""}
                     onChange={(e) => handleChange("degree", e.target.value)}
-                    onBlur={() => {
-                      const msg = validateField("degree", currentMember.degree || "", currentMember);
-                      if (msg) setMemberError("degree", msg);
-                      else clearMemberError("degree");
-                    }}
                     className={`p-3 rounded-xl bg-black border ${
                       memberErr.degree ? "border-red-500/60" : "border-green-400/30"
                     }`}
@@ -703,11 +648,6 @@ export default function FormField() {
                   <select
                     value={currentMember.year || ""}
                     onChange={(e) => handleChange("year", e.target.value)}
-                    onBlur={() => {
-                      const msg = validateField("year", currentMember.year || "", currentMember);
-                      if (msg) setMemberError("year", msg);
-                      else clearMemberError("year");
-                    }}
                     className={`p-3 rounded-xl bg-black border ${
                       memberErr.year ? "border-red-500/60" : "border-green-400/30"
                     }`}
@@ -747,11 +687,6 @@ export default function FormField() {
                     <input
                       value={currentMember.clg || ""}
                       onChange={(e) => handleOtherCollege(e.target.value)}
-                      onBlur={() => {
-                        const msg = validateField("clg", currentMember.clg || "", currentMember);
-                        if (msg) setMemberError("clg", msg);
-                        else clearMemberError("clg");
-                      }}
                       placeholder="Enter your college name"
                       className={`mt-3 p-3 rounded-xl bg-transparent border ${
                         memberErr.clg ? "border-red-500/60" : "border-green-400/30"
@@ -775,11 +710,6 @@ export default function FormField() {
                     type="email"
                     value={currentMember.email || ""}
                     onChange={(e) => handleChange("email", e.target.value)}
-                    onBlur={() => {
-                      const msg = validateField("email", currentMember.email || "", currentMember);
-                      if (msg) setMemberError("email", msg);
-                      else clearMemberError("email");
-                    }}
                     className={`p-3 rounded-xl bg-transparent border ${
                       memberErr.email ? "border-red-500/60" : "border-green-400/30"
                     }`}
@@ -797,9 +727,9 @@ export default function FormField() {
                 <button
                   type="button"
                   onClick={handleNext}
-                  disabled={!canProceed}
+                  disabled={loading || satState.loading}
                   className={`px-8 py-2 rounded-full font-bold tracking-widest transition ${
-                    canProceed ? "bg-green-400 text-black" : "bg-white/10 text-white/40 cursor-not-allowed"
+                    loading || satState.loading ? "bg-white/10 text-white/40 cursor-not-allowed" : "bg-green-400 text-black"
                   }`}
                 >
                   {currentIndex === sizeNum ? "REVIEW TEAM" : "NEXT"}
@@ -810,94 +740,6 @@ export default function FormField() {
 
           {showSummary && (
             <>
-              <div className="space-y-8">
-                <div className="flex items-end justify-between gap-6">
-                  <div>
-                    <h3 className="text-green-400 font-semibold tracking-widest">TEAM SUMMARY</h3>
-                    <p className="mt-2 text-sm text-green-300/60">Review the details before generating your ticket</p>
-                  </div>
-
-                  <div className="hidden md:flex items-center gap-3 text-xs tracking-widest text-green-300/60">
-                    <span className="px-3 py-1 rounded-full border border-green-400/20 bg-white/5">TEAM: {teamName || "—"}</span>
-                    <span className="px-3 py-1 rounded-full border border-green-400/20 bg-white/5">SIZE: {sizeNum || "—"}</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {members.map((m, i) => (
-                    <div
-                      key={i}
-                      className="relative overflow-hidden rounded-2xl border border-green-400/20 bg-black/40 backdrop-blur-xl p-6 shadow-[0_0_60px_rgba(34,197,94,0.08)]"
-                    >
-                      <div className="absolute inset-0 opacity-60 bg-gradient-to-br from-green-500/10 via-transparent to-transparent pointer-events-none" />
-                      <div className="absolute -top-24 -right-24 w-56 h-56 rounded-full bg-green-500/10 blur-3xl pointer-events-none" />
-
-                      <div className="relative flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl border border-green-400/20 bg-white/5 flex items-center justify-center text-green-300 font-bold">
-                            {i + 1}
-                          </div>
-                          <div>
-                            <div className="text-green-200 font-semibold tracking-wide">{i === 0 ? "Leader" : `Member ${i}`}</div>
-                            <div className="text-xs text-green-300/60 tracking-widest uppercase">
-                              {(m.degree || "—") + (m.year ? ` • ${m.year} Year` : "")}
-                            </div>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowSummary(false);
-                            setCurrentIndex(i + 1);
-                          }}
-                          className="text-xs tracking-widest px-3 py-2 rounded-full border border-green-400/20 bg-white/5 hover:bg-green-500/10 hover:border-green-400/40 transition text-green-200"
-                        >
-                          EDIT
-                        </button>
-                      </div>
-
-                      <div className="relative mt-5 grid grid-cols-1 gap-3 text-sm">
-                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
-                          <span className="text-green-300/60">Name</span>
-                          <span className="text-green-100 text-right font-medium">{m.name || "—"}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
-                          <span className="text-green-300/60">College</span>
-                          <span className="text-green-100 text-right font-medium">{normalizeSpaces(m.clg) || "—"}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
-                          <span className="text-green-300/60">Department</span>
-                          <span className="text-green-100 text-right font-medium">{m.dept || "—"}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
-                          <span className="text-green-300/60">Gender</span>
-                          <span className="text-green-100 text-right font-medium">{m.gender || "—"}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
-                          <span className="text-green-300/60">Degree</span>
-                          <span className="text-green-100 text-right font-medium">{m.degree || "—"}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
-                          <span className="text-green-300/60">Email</span>
-                          <span className="text-green-100 text-right font-medium break-all">{m.email || "—"}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
-                          <span className="text-green-300/60">Mobile</span>
-                          <span className="text-green-100 text-right font-medium">{m.mobile || "—"}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-black/40 border border-green-400/20 rounded-2xl p-6 text-center text-white backdrop-blur-xl shadow-[0_0_60px_rgba(34,197,94,0.08)]">
                   <p className="font-semibold tracking-widest text-green-300">SCAN & PAY</p>
