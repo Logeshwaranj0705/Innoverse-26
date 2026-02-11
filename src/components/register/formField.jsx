@@ -21,7 +21,7 @@ const DEGREES = ["B.E", "B.Tech", "B.Sc", "BCA", "M.E", "M.Tech", "M.Sc", "MCA",
 
 const SATHYABAMA = "Sathyabama Institute of Science and Technology";
 
-const FormField = () => {
+export default function FormField() {
   const [teamName, setTeamName] = useState("");
   const [teamSize, setTeamSize] = useState("");
   const [members, setMembers] = useState([]);
@@ -43,11 +43,13 @@ const FormField = () => {
     paymentImage: "",
   });
 
+  const sizeNum = useMemo(() => Number(teamSize || 0), [teamSize]);
+
   const scanImg = useMemo(() => {
-    if (Number(teamSize) === 3) return scanner3;
-    if (Number(teamSize) === 4) return scanner4;
+    if (sizeNum === 3) return scanner3;
+    if (sizeNum === 4) return scanner4;
     return scanner3;
-  }, [teamSize]);
+  }, [sizeNum]);
 
   const loadingTexts = useMemo(
     () => ["PLEASE WAIT MAY TAKE A WHILE", "DO NOT CLOSE THE TAB", "GENERATING TICKET"],
@@ -60,9 +62,7 @@ const FormField = () => {
       setLoadingTextIndex(0);
       return;
     }
-    const id = setInterval(() => {
-      setLoadingTextIndex((i) => (i + 1) % loadingTexts.length);
-    }, 1900);
+    const id = setInterval(() => setLoadingTextIndex((i) => (i + 1) % loadingTexts.length), 1900);
     return () => clearInterval(id);
   }, [loading, loadingTexts]);
 
@@ -158,26 +158,33 @@ const FormField = () => {
 
   const fetchSathyabamaStatus = async () => {
     try {
-      setSatState((p) => ({ ...p, loading: true }));
+      setSatState({ loading: true, filled: false, count: 0, limit: 0 });
+
       const res = await fetch(`${api}/slots/sathyabama`);
       const data = await res.json().catch(() => null);
+
       if (!res.ok || !data?.success) throw new Error(data?.error || "Failed to check slots");
-      setSatState({
+
+      const next = {
         loading: false,
         filled: !!data.filled,
         count: Number(data.count || 0),
         limit: Number(data.limit || 0),
-      });
-      return !!data.filled;
+      };
+
+      setSatState(next);
+      return next.filled;
     } catch (e) {
-      setSatState((p) => ({ ...p, loading: false }));
+      setSatState({ loading: false, filled: false, count: 0, limit: 0 });
       toast.error(e?.message || "Unable to check Sathyabama slots");
       return false;
     }
   };
 
-  const handleTeamSize = (size) => {
-    setTeamSize(size);
+  const handleTeamSize = (sizeStr) => {
+    setTeamSize(sizeStr);
+    const size = Number(sizeStr || 0);
+
     setCurrentIndex(1);
     setShowSummary(false);
     setPaymentImage(null);
@@ -331,7 +338,7 @@ const FormField = () => {
       return;
     }
 
-    if (currentIndex < teamSize) {
+    if (currentIndex < sizeNum) {
       setCurrentIndex(currentIndex + 1);
       setErrors((prev) => ({ ...prev, member: {} }));
     } else {
@@ -405,7 +412,7 @@ const FormField = () => {
       const payload = {
         event: "INNOVERSE 26",
         teamName: normalizeSpaces(teamName),
-        teamSize,
+        teamSize: sizeNum,
         members: members.map((m) => ({
           ...m,
           name: normalizeSpaces(m.name),
@@ -459,13 +466,14 @@ const FormField = () => {
   const isSistSelected = normLower(currentMember?.clg) === normLower(SATHYABAMA);
 
   const canProceed = useMemo(() => {
-    if (!teamSize || !members.length) return false;
+    if (!sizeNum || !members.length) return false;
     const req = ["name", "clg", "dept", "email", "mobile", "gender", "degree", "year"];
     const fieldsOk = req.every((f) => !validateField(f, currentMember?.[f] ?? "", currentMember));
     if (!currentMember?.clgMode) return false;
+    if (currentMember?.clgMode === "SIST" && satState.loading) return false;
     if (currentMember?.clgMode === "SIST" && satState.filled) return false;
     return fieldsOk;
-  }, [teamSize, members.length, currentIndex, satState.filled, currentMember]);
+  }, [sizeNum, members.length, currentIndex, satState.loading, satState.filled, currentMember]);
 
   if (showTicket && ticketData) return <Ticket data={ticketData} />;
 
@@ -522,9 +530,7 @@ const FormField = () => {
           <div className="flex items-center justify-between gap-6">
             <div>
               <h2 className="text-2xl font-bold tracking-widest text-green-400">TEAM REGISTRATION</h2>
-              <p className="mt-1 text-sm text-green-300/60">
-                Enter team and participant details carefully
-              </p>
+              <p className="mt-1 text-sm text-green-300/60">Enter team and participant details carefully</p>
             </div>
           </div>
 
@@ -555,7 +561,7 @@ const FormField = () => {
                 <label className="text-[11px] text-green-300/60 tracking-widest">TEAM SIZE</label>
                 <select
                   value={teamSize}
-                  onChange={(e) => handleTeamSize(Number(e.target.value))}
+                  onChange={(e) => handleTeamSize(e.target.value)}
                   className={`p-3 rounded-xl bg-black border ${
                     errors.teamSize ? "border-red-500/60" : "border-green-400/30"
                   }`}
@@ -574,9 +580,7 @@ const FormField = () => {
             <div className="flex justify-center">
               <div className="w-full max-w-xl text-center border border-green-400/30 rounded-2xl p-10 bg-black/50">
                 <h3 className="text-green-400 text-xl font-bold tracking-widest">MAKE YOUR FIRST MOVE</h3>
-                <p className="mt-3 text-green-300/60 text-sm">
-                  Select a team size to begin your Innoverse journey
-                </p>
+                <p className="mt-3 text-green-300/60 text-sm">Select a team size to begin your Innoverse journey</p>
               </div>
             </div>
           )}
@@ -787,7 +791,7 @@ const FormField = () => {
 
               <div className="flex items-center justify-between gap-4">
                 <div className="text-xs text-green-300/60 tracking-widest">
-                  {currentIndex}/{teamSize}
+                  {currentIndex}/{sizeNum}
                 </div>
 
                 <button
@@ -798,7 +802,7 @@ const FormField = () => {
                     canProceed ? "bg-green-400 text-black" : "bg-white/10 text-white/40 cursor-not-allowed"
                   }`}
                 >
-                  {currentIndex === teamSize ? "REVIEW TEAM" : "NEXT"}
+                  {currentIndex === sizeNum ? "REVIEW TEAM" : "NEXT"}
                 </button>
               </div>
             </div>
@@ -810,18 +814,12 @@ const FormField = () => {
                 <div className="flex items-end justify-between gap-6">
                   <div>
                     <h3 className="text-green-400 font-semibold tracking-widest">TEAM SUMMARY</h3>
-                    <p className="mt-2 text-sm text-green-300/60">
-                      Review the details before generating your ticket
-                    </p>
+                    <p className="mt-2 text-sm text-green-300/60">Review the details before generating your ticket</p>
                   </div>
 
                   <div className="hidden md:flex items-center gap-3 text-xs tracking-widest text-green-300/60">
-                    <span className="px-3 py-1 rounded-full border border-green-400/20 bg-white/5">
-                      TEAM: {teamName || "—"}
-                    </span>
-                    <span className="px-3 py-1 rounded-full border border-green-400/20 bg-white/5">
-                      SIZE: {teamSize || "—"}
-                    </span>
+                    <span className="px-3 py-1 rounded-full border border-green-400/20 bg-white/5">TEAM: {teamName || "—"}</span>
+                    <span className="px-3 py-1 rounded-full border border-green-400/20 bg-white/5">SIZE: {sizeNum || "—"}</span>
                   </div>
                 </div>
 
@@ -839,11 +837,8 @@ const FormField = () => {
                           <div className="w-10 h-10 rounded-xl border border-green-400/20 bg-white/5 flex items-center justify-center text-green-300 font-bold">
                             {i + 1}
                           </div>
-
                           <div>
-                            <div className="text-green-200 font-semibold tracking-wide">
-                              {i === 0 ? "Leader" : `Member ${i}`}
-                            </div>
+                            <div className="text-green-200 font-semibold tracking-wide">{i === 0 ? "Leader" : `Member ${i}`}</div>
                             <div className="text-xs text-green-300/60 tracking-widest uppercase">
                               {(m.degree || "—") + (m.year ? ` • ${m.year} Year` : "")}
                             </div>
@@ -870,9 +865,7 @@ const FormField = () => {
 
                         <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
                           <span className="text-green-300/60">College</span>
-                          <span className="text-green-100 text-right font-medium">
-                            {normalizeSpaces(m.clg) || "—"}
-                          </span>
+                          <span className="text-green-100 text-right font-medium">{normalizeSpaces(m.clg) || "—"}</span>
                         </div>
 
                         <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
@@ -908,11 +901,7 @@ const FormField = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-black/40 border border-green-400/20 rounded-2xl p-6 text-center text-white backdrop-blur-xl shadow-[0_0_60px_rgba(34,197,94,0.08)]">
                   <p className="font-semibold tracking-widest text-green-300">SCAN & PAY</p>
-                  <img
-                    src={scanImg}
-                    alt={`QR for team size ${teamSize || ""}`}
-                    className="mx-auto w-[260px] h-[300px] object-contain mt-3"
-                  />
+                  <img src={scanImg} alt={`QR for team size ${sizeNum || ""}`} className="mx-auto w-[260px] h-[300px] object-contain mt-3" />
                   <p className="mt-2 text-xs text-green-300/60 tracking-widest">UPLOAD SCREENSHOT AFTER PAYMENT</p>
                 </div>
 
@@ -927,11 +916,7 @@ const FormField = () => {
                         <span className="text-green-300/60 text-xs tracking-widest">PAYMENT SCREENSHOT</span>
                       </div>
                     ) : (
-                      <img
-                        src={URL.createObjectURL(paymentImage)}
-                        alt="Uploaded"
-                        className="absolute inset-0 w-full h-full object-cover"
-                      />
+                      <img src={URL.createObjectURL(paymentImage)} alt="Uploaded" className="absolute inset-0 w-full h-full object-cover" />
                     )}
 
                     <input
@@ -941,10 +926,7 @@ const FormField = () => {
                       onChange={(e) => {
                         const file = e.target.files?.[0] || null;
                         setPaymentImage(file);
-                        setErrors((prev) => ({
-                          ...prev,
-                          paymentImage: file ? "" : "Payment screenshot is required",
-                        }));
+                        setErrors((prev) => ({ ...prev, paymentImage: file ? "" : "Payment screenshot is required" }));
                       }}
                       required
                     />
@@ -993,6 +975,5 @@ const FormField = () => {
       </div>
     </>
   );
-};
-
+}
 export default FormField;
