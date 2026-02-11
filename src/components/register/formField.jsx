@@ -436,10 +436,7 @@ export default function FormField() {
 
       const data = await res.json().catch(() => null);
 
-      if (!res.ok) {
-        throw new Error(data?.error || data?.message || `Server error (${res.status}). Please try again.`);
-      }
-
+      if (!res.ok) throw new Error(data?.error || data?.message || `Server error (${res.status}). Please try again.`);
       if (!data?.success) throw new Error(data?.error || "Registration failed");
 
       toast.success("Registration successful 🎉");
@@ -729,7 +726,9 @@ export default function FormField() {
                   onClick={handleNext}
                   disabled={loading || satState.loading}
                   className={`px-8 py-2 rounded-full font-bold tracking-widest transition ${
-                    loading || satState.loading ? "bg-white/10 text-white/40 cursor-not-allowed" : "bg-green-400 text-black"
+                    loading || satState.loading
+                      ? "bg-white/10 text-white/40 cursor-not-allowed"
+                      : "bg-green-400 text-black"
                   }`}
                 >
                   {currentIndex === sizeNum ? "REVIEW TEAM" : "NEXT"}
@@ -740,6 +739,100 @@ export default function FormField() {
 
           {showSummary && (
             <>
+              <div className="space-y-8">
+                <div className="flex items-end justify-between gap-6">
+                  <div>
+                    <h3 className="text-green-400 font-semibold tracking-widest">TEAM SUMMARY</h3>
+                    <p className="mt-2 text-sm text-green-300/60">Review the details before generating your ticket</p>
+                  </div>
+
+                  <div className="hidden md:flex items-center gap-3 text-xs tracking-widest text-green-300/60">
+                    <span className="px-3 py-1 rounded-full border border-green-400/20 bg-white/5">
+                      TEAM: {teamName || "—"}
+                    </span>
+                    <span className="px-3 py-1 rounded-full border border-green-400/20 bg-white/5">
+                      SIZE: {sizeNum || "—"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {members.map((m, i) => (
+                    <div
+                      key={i}
+                      className="relative overflow-hidden rounded-2xl border border-green-400/20 bg-black/40 backdrop-blur-xl p-6 shadow-[0_0_60px_rgba(34,197,94,0.08)]"
+                    >
+                      <div className="absolute inset-0 opacity-60 bg-gradient-to-br from-green-500/10 via-transparent to-transparent pointer-events-none" />
+                      <div className="absolute -top-24 -right-24 w-56 h-56 rounded-full bg-green-500/10 blur-3xl pointer-events-none" />
+
+                      <div className="relative flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl border border-green-400/20 bg-white/5 flex items-center justify-center text-green-300 font-bold">
+                            {i + 1}
+                          </div>
+                          <div>
+                            <div className="text-green-200 font-semibold tracking-wide">
+                              {i === 0 ? "Leader" : `Member ${i}`}
+                            </div>
+                            <div className="text-xs text-green-300/60 tracking-widest uppercase">
+                              {(m.degree || "—") + (m.year ? ` • ${m.year} Year` : "")}
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowSummary(false);
+                            setCurrentIndex(i + 1);
+                          }}
+                          className="text-xs tracking-widest px-3 py-2 rounded-full border border-green-400/20 bg-white/5 hover:bg-green-500/10 hover:border-green-400/40 transition text-green-200"
+                        >
+                          EDIT
+                        </button>
+                      </div>
+
+                      <div className="relative mt-5 grid grid-cols-1 gap-3 text-sm">
+                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
+                          <span className="text-green-300/60">Name</span>
+                          <span className="text-green-100 text-right font-medium">{m.name || "—"}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
+                          <span className="text-green-300/60">College</span>
+                          <span className="text-green-100 text-right font-medium">{normalizeSpaces(m.clg) || "—"}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
+                          <span className="text-green-300/60">Department</span>
+                          <span className="text-green-100 text-right font-medium">{m.dept || "—"}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
+                          <span className="text-green-300/60">Gender</span>
+                          <span className="text-green-100 text-right font-medium">{m.gender || "—"}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
+                          <span className="text-green-300/60">Degree</span>
+                          <span className="text-green-100 text-right font-medium">{m.degree || "—"}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
+                          <span className="text-green-300/60">Email</span>
+                          <span className="text-green-100 text-right font-medium break-all">{m.email || "—"}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
+                          <span className="text-green-300/60">Mobile</span>
+                          <span className="text-green-100 text-right font-medium">{m.mobile || "—"}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-black/40 border border-green-400/20 rounded-2xl p-6 text-center text-white backdrop-blur-xl shadow-[0_0_60px_rgba(34,197,94,0.08)]">
                   <p className="font-semibold tracking-widest text-green-300">SCAN & PAY</p>
