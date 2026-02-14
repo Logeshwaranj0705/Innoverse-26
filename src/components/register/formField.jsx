@@ -14,6 +14,7 @@ const DEPT_RE = /^[A-Za-z\s&().,'-]{2,60}$/;
 
 const normalizeSpaces = (v) => String(v || "").replace(/\s+/g, " ").trim();
 const normLower = (v) => normalizeSpaces(v).toLowerCase();
+const hasSathyabamaWord = (v) => normLower(v).includes("sathyabama");
 
 const YEARS = ["1", "2", "3", "4"];
 const GENDERS = ["Male", "Female", "Other"];
@@ -21,7 +22,7 @@ const DEGREES = ["B.E", "B.Tech", "B.Sc", "BCA", "M.E", "M.Tech", "M.Sc", "MCA",
 
 const SATHYABAMA = "Sathyabama Institute of Science and Technology";
 
-export default function FormField() {
+const FormField = () => {
   const [teamName, setTeamName] = useState("");
   const [teamSize, setTeamSize] = useState("");
   const [members, setMembers] = useState([]);
@@ -43,13 +44,11 @@ export default function FormField() {
     paymentImage: "",
   });
 
-  const sizeNum = useMemo(() => Number(teamSize || 0), [teamSize]);
-
   const scanImg = useMemo(() => {
-    if (sizeNum === 3) return scanner3;
-    if (sizeNum === 4) return scanner4;
+    if (Number(teamSize) === 3) return scanner3;
+    if (Number(teamSize) === 4) return scanner4;
     return scanner3;
-  }, [sizeNum]);
+  }, [teamSize]);
 
   const loadingTexts = useMemo(
     () => ["PLEASE WAIT MAY TAKE A WHILE", "DO NOT CLOSE THE TAB", "GENERATING TICKET"],
@@ -62,7 +61,9 @@ export default function FormField() {
       setLoadingTextIndex(0);
       return;
     }
-    const id = setInterval(() => setLoadingTextIndex((i) => (i + 1) % loadingTexts.length), 1900);
+    const id = setInterval(() => {
+      setLoadingTextIndex((i) => (i + 1) % loadingTexts.length);
+    }, 1900);
     return () => clearInterval(id);
   }, [loading, loadingTexts]);
 
@@ -91,7 +92,7 @@ export default function FormField() {
       if (!clean) return "College name is required";
       if (clean.length < 2) return "College name is too short";
       if (clean.length > 120) return "College name is too long";
-      if (ctx?.clgMode === "OTHER" && normLower(clean) === normLower(SATHYABAMA))
+      if (ctx?.clgMode === "OTHER" && hasSathyabamaWord(clean))
         return "Select Sathyabama from dropdown (don’t type it in Others)";
       return "";
     }
@@ -159,32 +160,25 @@ export default function FormField() {
   const fetchSathyabamaStatus = async () => {
     try {
       setSatState((p) => ({ ...p, loading: true }));
-
       const res = await fetch(`${api}/slots/sathyabama`);
       const data = await res.json().catch(() => null);
-
       if (!res.ok || !data?.success) throw new Error(data?.error || "Failed to check slots");
-
-      const next = {
+      setSatState({
         loading: false,
         filled: !!data.filled,
         count: Number(data.count || 0),
         limit: Number(data.limit || 0),
-      };
-
-      setSatState(next);
-      return next.filled;
+      });
+      return !!data.filled;
     } catch (e) {
-      setSatState({ loading: false, filled: false, count: 0, limit: 0 });
+      setSatState((p) => ({ ...p, loading: false }));
       toast.error(e?.message || "Unable to check Sathyabama slots");
       return false;
     }
   };
 
-  const handleTeamSize = (sizeStr) => {
-    setTeamSize(sizeStr);
-    const size = Number(sizeStr || 0);
-
+  const handleTeamSize = (size) => {
+    setTeamSize(size);
     setCurrentIndex(1);
     setShowSummary(false);
     setPaymentImage(null);
@@ -216,7 +210,7 @@ export default function FormField() {
   const handleChange = (field, value) => {
     let v = value;
 
-    if (field === "name" || field === "dept") v = v.replace(/\s+/g, " ");
+    if (field === "name" || field === "teamName" || field === "dept") v = v.replace(/\s+/g, " ");
     if (field === "mobile") v = v.replace(/[^\d]/g, "").slice(0, 10);
     if (field === "email") v = v.trim();
 
@@ -240,32 +234,33 @@ export default function FormField() {
     updated[idx].clgMode = mode;
 
     if (mode === "SIST") {
+      const filled = await fetchSathyabamaStatus();
+      if (filled) {
+        updated[idx].clgMode = "";
+        updated[idx].clg = "";
+        setMembers(updated);
+        setMemberError("clg", "Slot filled for Sathyabama");
+        toast.error("Slot filled for Sathyabama");
+        return;
+      }
       updated[idx].clg = SATHYABAMA;
       setMembers(updated);
       clearMemberError("clg");
-
-      const filled = await fetchSathyabamaStatus();
-      if (filled) {
-        const u2 = [...updated];
-        u2[idx].clgMode = "";
-        u2[idx].clg = "";
-        setMembers(u2);
-        setMemberError("clg", "Slot filled for Sathyabama");
-        toast.error("Slot filled for Sathyabama");
-      }
       return;
     }
 
     if (mode === "OTHER") {
       updated[idx].clg = "";
       setMembers(updated);
-      setMemberError("clg", "College name is required");
+      const msg = validateField("clg", "", updated[idx]);
+      if (msg) setMemberError("clg", msg);
       return;
     }
 
     updated[idx].clg = "";
     setMembers(updated);
-    setMemberError("clg", "Select college option");
+    const msg = validateField("clg", "", updated[idx]);
+    if (msg) setMemberError("clg", msg);
   };
 
   const handleOtherCollege = (val) => {
@@ -337,7 +332,7 @@ export default function FormField() {
       return;
     }
 
-    if (currentIndex < sizeNum) {
+    if (currentIndex < teamSize) {
       setCurrentIndex(currentIndex + 1);
       setErrors((prev) => ({ ...prev, member: {} }));
     } else {
@@ -356,9 +351,7 @@ export default function FormField() {
     if (!tx) txnErr = "Transaction ID is required";
     else if (!TXN_RE.test(tx)) txnErr = "Transaction ID looks invalid";
 
-    const sathyabamaTypedInOther = members.some(
-      (m) => m?.clgMode === "OTHER" && normLower(m?.clg) === normLower(SATHYABAMA)
-    );
+    const sathyabamaTypedInOther = members.some((m) => m?.clgMode === "OTHER" && hasSathyabamaWord(m?.clg));
     const leaderIsSathyabama = normLower(members?.[0]?.clg) === normLower(SATHYABAMA);
 
     let clgErr = "";
@@ -411,7 +404,7 @@ export default function FormField() {
       const payload = {
         event: "INNOVERSE 26",
         teamName: normalizeSpaces(teamName),
-        teamSize: sizeNum,
+        teamSize,
         members: members.map((m) => ({
           ...m,
           name: normalizeSpaces(m.name),
@@ -434,10 +427,21 @@ export default function FormField() {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json().catch(() => null);
+      let data = null;
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
 
-      if (!res.ok) throw new Error(data?.error || data?.message || `Server error (${res.status}). Please try again.`);
-      if (!data?.success) throw new Error(data?.error || "Registration failed");
+      if (!res.ok) {
+        const msg = data?.error || data?.message || `Server error (${res.status}). Please try again.`;
+        throw new Error(msg);
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || "Registration failed");
+      }
 
       toast.success("Registration successful 🎉");
       setTicketData(data.data);
@@ -452,6 +456,15 @@ export default function FormField() {
   const memberErr = errors.member || {};
   const currentMember = members[currentIndex - 1] || {};
   const isSistSelected = normLower(currentMember?.clg) === normLower(SATHYABAMA);
+
+  const canProceed = useMemo(() => {
+    if (!teamSize || !members.length) return false;
+    const req = ["name", "clg", "dept", "email", "mobile", "gender", "degree", "year"];
+    const fieldsOk = req.every((f) => !validateField(f, currentMember?.[f] ?? "", currentMember));
+    if (!currentMember?.clgMode) return false;
+    if (currentMember?.clgMode === "SIST" && satState.filled) return false;
+    return fieldsOk;
+  }, [teamSize, members.length, currentIndex, satState.filled, currentMember]);
 
   if (showTicket && ticketData) return <Ticket data={ticketData} />;
 
@@ -478,9 +491,21 @@ export default function FormField() {
               {loadingTexts[loadingTextIndex]}
             </p>
             <div className="flex items-center gap-2">
-              <span className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${loadingTextIndex === 0 ? "opacity-100" : "opacity-25"}`} />
-              <span className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${loadingTextIndex === 1 ? "opacity-100" : "opacity-25"}`} />
-              <span className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${loadingTextIndex === 2 ? "opacity-100" : "opacity-25"}`} />
+              <span
+                className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${
+                  loadingTextIndex === 0 ? "opacity-100" : "opacity-25"
+                }`}
+              />
+              <span
+                className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${
+                  loadingTextIndex === 1 ? "opacity-100" : "opacity-25"
+                }`}
+              />
+              <span
+                className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${
+                  loadingTextIndex === 2 ? "opacity-100" : "opacity-25"
+                }`}
+              />
             </div>
           </div>
         </div>
@@ -527,7 +552,7 @@ export default function FormField() {
                 <label className="text-[11px] text-green-300/60 tracking-widest">TEAM SIZE</label>
                 <select
                   value={teamSize}
-                  onChange={(e) => handleTeamSize(e.target.value)}
+                  onChange={(e) => handleTeamSize(Number(e.target.value))}
                   className={`p-3 rounded-xl bg-black border ${
                     errors.teamSize ? "border-red-500/60" : "border-green-400/30"
                   }`}
@@ -563,6 +588,11 @@ export default function FormField() {
                   <input
                     value={currentMember.name || ""}
                     onChange={(e) => handleChange("name", e.target.value)}
+                    onBlur={() => {
+                      const msg = validateField("name", currentMember.name || "", currentMember);
+                      if (msg) setMemberError("name", msg);
+                      else clearMemberError("name");
+                    }}
                     className={`p-3 rounded-xl bg-transparent border ${
                       memberErr.name ? "border-red-500/60" : "border-green-400/30"
                     }`}
@@ -576,6 +606,11 @@ export default function FormField() {
                   <input
                     value={currentMember.dept || ""}
                     onChange={(e) => handleChange("dept", e.target.value)}
+                    onBlur={() => {
+                      const msg = validateField("dept", currentMember.dept || "", currentMember);
+                      if (msg) setMemberError("dept", msg);
+                      else clearMemberError("dept");
+                    }}
                     className={`p-3 rounded-xl bg-transparent border ${
                       memberErr.dept ? "border-red-500/60" : "border-green-400/30"
                     }`}
@@ -591,6 +626,11 @@ export default function FormField() {
                     type="tel"
                     value={currentMember.mobile || ""}
                     onChange={(e) => handleChange("mobile", e.target.value)}
+                    onBlur={() => {
+                      const msg = validateField("mobile", currentMember.mobile || "", currentMember);
+                      if (msg) setMemberError("mobile", msg);
+                      else clearMemberError("mobile");
+                    }}
                     className={`p-3 rounded-xl bg-transparent border ${
                       memberErr.mobile ? "border-red-500/60" : "border-green-400/30"
                     }`}
@@ -601,7 +641,11 @@ export default function FormField() {
 
                 <div className="flex flex-col gap-2">
                   <label className="text-[11px] text-green-300/60 tracking-widest">GENDER</label>
-                  <div className={`rounded-xl border p-3 ${memberErr.gender ? "border-red-500/60" : "border-green-400/30"}`}>
+                  <div
+                    className={`rounded-xl border p-3 ${
+                      memberErr.gender ? "border-red-500/60" : "border-green-400/30"
+                    }`}
+                  >
                     <div className="flex flex-wrap gap-4">
                       {GENDERS.map((g) => (
                         <label key={g} className="flex items-center gap-2 text-sm text-green-100/90 cursor-pointer">
@@ -625,6 +669,11 @@ export default function FormField() {
                   <select
                     value={currentMember.degree || ""}
                     onChange={(e) => handleChange("degree", e.target.value)}
+                    onBlur={() => {
+                      const msg = validateField("degree", currentMember.degree || "", currentMember);
+                      if (msg) setMemberError("degree", msg);
+                      else clearMemberError("degree");
+                    }}
                     className={`p-3 rounded-xl bg-black border ${
                       memberErr.degree ? "border-red-500/60" : "border-green-400/30"
                     }`}
@@ -645,6 +694,11 @@ export default function FormField() {
                   <select
                     value={currentMember.year || ""}
                     onChange={(e) => handleChange("year", e.target.value)}
+                    onBlur={() => {
+                      const msg = validateField("year", currentMember.year || "", currentMember);
+                      if (msg) setMemberError("year", msg);
+                      else clearMemberError("year");
+                    }}
                     className={`p-3 rounded-xl bg-black border ${
                       memberErr.year ? "border-red-500/60" : "border-green-400/30"
                     }`}
@@ -684,6 +738,11 @@ export default function FormField() {
                     <input
                       value={currentMember.clg || ""}
                       onChange={(e) => handleOtherCollege(e.target.value)}
+                      onBlur={() => {
+                        const msg = validateField("clg", currentMember.clg || "", currentMember);
+                        if (msg) setMemberError("clg", msg);
+                        else clearMemberError("clg");
+                      }}
                       placeholder="Enter your college name"
                       className={`mt-3 p-3 rounded-xl bg-transparent border ${
                         memberErr.clg ? "border-red-500/60" : "border-green-400/30"
@@ -707,6 +766,11 @@ export default function FormField() {
                     type="email"
                     value={currentMember.email || ""}
                     onChange={(e) => handleChange("email", e.target.value)}
+                    onBlur={() => {
+                      const msg = validateField("email", currentMember.email || "", currentMember);
+                      if (msg) setMemberError("email", msg);
+                      else clearMemberError("email");
+                    }}
                     className={`p-3 rounded-xl bg-transparent border ${
                       memberErr.email ? "border-red-500/60" : "border-green-400/30"
                     }`}
@@ -718,20 +782,18 @@ export default function FormField() {
 
               <div className="flex items-center justify-between gap-4">
                 <div className="text-xs text-green-300/60 tracking-widest">
-                  {currentIndex}/{sizeNum}
+                  {currentIndex}/{teamSize}
                 </div>
 
                 <button
                   type="button"
                   onClick={handleNext}
-                  disabled={loading || satState.loading}
+                  disabled={!canProceed}
                   className={`px-8 py-2 rounded-full font-bold tracking-widest transition ${
-                    loading || satState.loading
-                      ? "bg-white/10 text-white/40 cursor-not-allowed"
-                      : "bg-green-400 text-black"
+                    canProceed ? "bg-green-400 text-black" : "bg-white/10 text-white/40 cursor-not-allowed"
                   }`}
                 >
-                  {currentIndex === sizeNum ? "REVIEW TEAM" : "NEXT"}
+                  {currentIndex === teamSize ? "REVIEW TEAM" : "NEXT"}
                 </button>
               </div>
             </div>
@@ -751,7 +813,7 @@ export default function FormField() {
                       TEAM: {teamName || "—"}
                     </span>
                     <span className="px-3 py-1 rounded-full border border-green-400/20 bg-white/5">
-                      SIZE: {sizeNum || "—"}
+                      SIZE: {teamSize || "—"}
                     </span>
                   </div>
                 </div>
@@ -770,10 +832,9 @@ export default function FormField() {
                           <div className="w-10 h-10 rounded-xl border border-green-400/20 bg-white/5 flex items-center justify-center text-green-300 font-bold">
                             {i + 1}
                           </div>
+
                           <div>
-                            <div className="text-green-200 font-semibold tracking-wide">
-                              {i === 0 ? "Leader" : `Member ${i}`}
-                            </div>
+                            <div className="text-green-200 font-semibold tracking-wide">{i === 0 ? "Leader" : `Member ${i}`}</div>
                             <div className="text-xs text-green-300/60 tracking-widest uppercase">
                               {(m.degree || "—") + (m.year ? ` • ${m.year} Year` : "")}
                             </div>
@@ -836,7 +897,11 @@ export default function FormField() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-black/40 border border-green-400/20 rounded-2xl p-6 text-center text-white backdrop-blur-xl shadow-[0_0_60px_rgba(34,197,94,0.08)]">
                   <p className="font-semibold tracking-widest text-green-300">SCAN & PAY</p>
-                  <img src={scanImg} alt={`QR for team size ${sizeNum || ""}`} className="mx-auto w-[260px] h-[300px] object-contain mt-3" />
+                  <img
+                    src={scanImg}
+                    alt={`QR for team size ${teamSize || ""}`}
+                    className="mx-auto w-[260px] h-[300px] object-contain mt-3"
+                  />
                   <p className="mt-2 text-xs text-green-300/60 tracking-widest">UPLOAD SCREENSHOT AFTER PAYMENT</p>
                 </div>
 
@@ -851,7 +916,11 @@ export default function FormField() {
                         <span className="text-green-300/60 text-xs tracking-widest">PAYMENT SCREENSHOT</span>
                       </div>
                     ) : (
-                      <img src={URL.createObjectURL(paymentImage)} alt="Uploaded" className="absolute inset-0 w-full h-full object-cover" />
+                      <img
+                        src={URL.createObjectURL(paymentImage)}
+                        alt="Uploaded"
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
                     )}
 
                     <input
@@ -861,7 +930,10 @@ export default function FormField() {
                       onChange={(e) => {
                         const file = e.target.files?.[0] || null;
                         setPaymentImage(file);
-                        setErrors((prev) => ({ ...prev, paymentImage: file ? "" : "Payment screenshot is required" }));
+                        setErrors((prev) => ({
+                          ...prev,
+                          paymentImage: file ? "" : "Payment screenshot is required",
+                        }));
                       }}
                       required
                     />
@@ -910,4 +982,6 @@ export default function FormField() {
       </div>
     </>
   );
-}
+};
+
+export default FormField;
