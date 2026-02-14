@@ -10,7 +10,7 @@ const NAME_RE = /^[A-Za-z\s.'-]{2,60}$/;
 const PHONE_RE = /^[6-9]\d{9}$/;
 const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 const TXN_RE = /^[A-Za-z0-9_-]{6,40}$/;
-const DEPT_RE = /^[A-Za-z\s&().,'-]{2,60}$/;
+const DEPT_RE = /^[A-Za-z0-9\s&().,'-]{2,60}$/;
 
 const normalizeSpaces = (v) => String(v || "").replace(/\s+/g, " ").trim();
 const normLower = (v) => normalizeSpaces(v).toLowerCase();
@@ -22,7 +22,7 @@ const DEGREES = ["B.E", "B.Tech", "B.Sc", "BCA", "M.E", "M.Tech", "M.Sc", "MCA",
 
 const SATHYABAMA = "Sathyabama Institute of Science and Technology";
 
-const FormField = () => {
+export default function FormField() {
   const [teamName, setTeamName] = useState("");
   const [teamSize, setTeamSize] = useState("");
   const [members, setMembers] = useState([]);
@@ -506,16 +506,30 @@ const FormField = () => {
               {loadingTexts[loadingTextIndex]}
             </p>
             <div className="flex items-center gap-2">
-              <span className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${loadingTextIndex === 0 ? "opacity-100" : "opacity-25"}`} />
-              <span className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${loadingTextIndex === 1 ? "opacity-100" : "opacity-25"}`} />
-              <span className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${loadingTextIndex === 2 ? "opacity-100" : "opacity-25"}`} />
+              <span
+                className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${
+                  loadingTextIndex === 0 ? "opacity-100" : "opacity-25"
+                }`}
+              />
+              <span
+                className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${
+                  loadingTextIndex === 1 ? "opacity-100" : "opacity-25"
+                }`}
+              />
+              <span
+                className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${
+                  loadingTextIndex === 2 ? "opacity-100" : "opacity-25"
+                }`}
+              />
             </div>
           </div>
         </div>
       )}
 
       <div className="relative bg-black flex justify-center px-6 py-24">
-        <Particles />
+        <div className="pointer-events-none absolute inset-0 z-0">
+          <Particles />
+        </div>
 
         <form
           onSubmit={handleSubmit}
@@ -543,7 +557,9 @@ const FormField = () => {
                     const msg = validateTeamName(v);
                     setErrors((prev) => ({ ...prev, teamName: msg }));
                   }}
-                  className={`p-3 rounded-xl bg-transparent border ${errors.teamName ? "border-red-500/60" : "border-green-400/30"}`}
+                  className={`p-3 rounded-xl bg-transparent border ${
+                    errors.teamName ? "border-red-500/60" : "border-green-400/30"
+                  }`}
                   required
                 />
                 {errors.teamName && <p className="text-xs text-red-400/90">{errors.teamName}</p>}
@@ -554,7 +570,9 @@ const FormField = () => {
                 <select
                   value={teamSize}
                   onChange={(e) => handleTeamSize(Number(e.target.value))}
-                  className={`p-3 rounded-xl bg-black border ${errors.teamSize ? "border-red-500/60" : "border-green-400/30"}`}
+                  className={`p-3 rounded-xl bg-black border ${
+                    errors.teamSize ? "border-red-500/60" : "border-green-400/30"
+                  }`}
                   required
                 >
                   <option value="">Select Team Size</option>
@@ -587,12 +605,9 @@ const FormField = () => {
                   <input
                     value={currentMember.name || ""}
                     onChange={(e) => handleChange("name", e.target.value)}
-                    onBlur={() => {
-                      const msg = validateField("name", currentMember.name || "", currentMember);
-                      if (msg) setMemberError("name", msg);
-                      else clearMemberError("name");
-                    }}
-                    className={`p-3 rounded-xl bg-transparent border ${memberErr.name ? "border-red-500/60" : "border-green-400/30"}`}
+                    className={`p-3 rounded-xl bg-transparent border ${
+                      memberErr.name ? "border-red-500/60" : "border-green-400/30"
+                    }`}
                     required
                   />
                   {memberErr.name && <p className="text-xs text-red-400/90">{memberErr.name}</p>}
@@ -603,12 +618,9 @@ const FormField = () => {
                   <input
                     value={currentMember.dept || ""}
                     onChange={(e) => handleChange("dept", e.target.value)}
-                    onBlur={() => {
-                      const msg = validateField("dept", currentMember.dept || "", currentMember);
-                      if (msg) setMemberError("dept", msg);
-                      else clearMemberError("dept");
-                    }}
-                    className={`p-3 rounded-xl bg-transparent border ${memberErr.dept ? "border-red-500/60" : "border-green-400/30"}`}
+                    className={`p-3 rounded-xl bg-transparent border ${
+                      memberErr.dept ? "border-red-500/60" : "border-green-400/30"
+                    }`}
                     required
                   />
                   {memberErr.dept && <p className="text-xs text-red-400/90">{memberErr.dept}</p>}
@@ -621,12 +633,9 @@ const FormField = () => {
                     type="tel"
                     value={currentMember.mobile || ""}
                     onChange={(e) => handleChange("mobile", e.target.value)}
-                    onBlur={() => {
-                      const msg = validateField("mobile", currentMember.mobile || "", currentMember);
-                      if (msg) setMemberError("mobile", msg);
-                      else clearMemberError("mobile");
-                    }}
-                    className={`p-3 rounded-xl bg-transparent border ${memberErr.mobile ? "border-red-500/60" : "border-green-400/30"}`}
+                    className={`p-3 rounded-xl bg-transparent border ${
+                      memberErr.mobile ? "border-red-500/60" : "border-green-400/30"
+                    }`}
                     required
                   />
                   {memberErr.mobile && <p className="text-xs text-red-400/90">{memberErr.mobile}</p>}
@@ -634,7 +643,11 @@ const FormField = () => {
 
                 <div className="flex flex-col gap-2">
                   <label className="text-[11px] text-green-300/60 tracking-widest">GENDER</label>
-                  <div className={`rounded-xl border p-3 ${memberErr.gender ? "border-red-500/60" : "border-green-400/30"}`}>
+                  <div
+                    className={`rounded-xl border p-3 ${
+                      memberErr.gender ? "border-red-500/60" : "border-green-400/30"
+                    }`}
+                  >
                     <div className="flex flex-wrap gap-4">
                       {GENDERS.map((g) => (
                         <label key={g} className="flex items-center gap-2 text-sm text-green-100/90 cursor-pointer">
@@ -658,12 +671,9 @@ const FormField = () => {
                   <select
                     value={currentMember.degree || ""}
                     onChange={(e) => handleChange("degree", e.target.value)}
-                    onBlur={() => {
-                      const msg = validateField("degree", currentMember.degree || "", currentMember);
-                      if (msg) setMemberError("degree", msg);
-                      else clearMemberError("degree");
-                    }}
-                    className={`p-3 rounded-xl bg-black border ${memberErr.degree ? "border-red-500/60" : "border-green-400/30"}`}
+                    className={`p-3 rounded-xl bg-black border ${
+                      memberErr.degree ? "border-red-500/60" : "border-green-400/30"
+                    }`}
                     required
                   >
                     <option value="">Select Degree</option>
@@ -681,12 +691,9 @@ const FormField = () => {
                   <select
                     value={currentMember.year || ""}
                     onChange={(e) => handleChange("year", e.target.value)}
-                    onBlur={() => {
-                      const msg = validateField("year", currentMember.year || "", currentMember);
-                      if (msg) setMemberError("year", msg);
-                      else clearMemberError("year");
-                    }}
-                    className={`p-3 rounded-xl bg-black border ${memberErr.year ? "border-red-500/60" : "border-green-400/30"}`}
+                    className={`p-3 rounded-xl bg-black border ${
+                      memberErr.year ? "border-red-500/60" : "border-green-400/30"
+                    }`}
                     required
                   >
                     <option value="">Select Year</option>
@@ -705,7 +712,9 @@ const FormField = () => {
                   <select
                     value={currentMember.clgMode || ""}
                     onChange={(e) => handleCollegeMode(e.target.value)}
-                    className={`p-3 rounded-xl bg-black border ${memberErr.clg ? "border-red-500/60" : "border-green-400/30"}`}
+                    className={`p-3 rounded-xl bg-black border ${
+                      memberErr.clg ? "border-red-500/60" : "border-green-400/30"
+                    }`}
                     required
                   >
                     <option value="">Select College</option>
@@ -721,13 +730,10 @@ const FormField = () => {
                     <input
                       value={currentMember.clg || ""}
                       onChange={(e) => handleOtherCollege(e.target.value)}
-                      onBlur={() => {
-                        const msg = validateField("clg", currentMember.clg || "", currentMember);
-                        if (msg) setMemberError("clg", msg);
-                        else clearMemberError("clg");
-                      }}
                       placeholder="Enter your college name"
-                      className={`mt-3 p-3 rounded-xl bg-transparent border ${memberErr.clg ? "border-red-500/60" : "border-green-400/30"}`}
+                      className={`mt-3 p-3 rounded-xl bg-transparent border ${
+                        memberErr.clg ? "border-red-500/60" : "border-green-400/30"
+                      }`}
                       required
                     />
                   )}
@@ -747,29 +753,29 @@ const FormField = () => {
                     type="email"
                     value={currentMember.email || ""}
                     onChange={(e) => handleChange("email", e.target.value)}
-                    onBlur={() => {
-                      const msg = validateField("email", currentMember.email || "", currentMember);
-                      if (msg) setMemberError("email", msg);
-                      else clearMemberError("email");
-                    }}
-                    className={`p-3 rounded-xl bg-transparent border ${memberErr.email ? "border-red-500/60" : "border-green-400/30"}`}
+                    className={`p-3 rounded-xl bg-transparent border ${
+                      memberErr.email ? "border-red-500/60" : "border-green-400/30"
+                    }`}
                     required
                   />
                   {memberErr.email && <p className="text-xs text-red-400/90">{memberErr.email}</p>}
                 </div>
               </div>
 
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center justify-between gap-4 relative z-50">
                 <div className="text-xs text-green-300/60 tracking-widest">
                   {currentIndex}/{teamSize}
                 </div>
 
                 <button
                   type="button"
-                  onClick={handleNext}
-                  className={`px-8 py-2 rounded-full font-bold tracking-widest transition ${
-                    canProceed ? "bg-green-400 text-black" : "bg-white/10 text-white/40"
-                  }`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleNext();
+                  }}
+                  disabled={false}
+                  className="px-8 py-2 rounded-full font-bold tracking-widest transition bg-green-400 text-black hover:opacity-90 active:scale-[0.98] pointer-events-auto relative z-50"
                 >
                   {currentIndex === Number(teamSize) ? "REVIEW TEAM" : "NEXT"}
                 </button>
@@ -867,6 +873,4 @@ const FormField = () => {
       </div>
     </>
   );
-};
-
-export default FormField;
+}
