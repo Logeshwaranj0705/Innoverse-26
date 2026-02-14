@@ -279,6 +279,7 @@ const FormField = () => {
   const validateCurrentMember = () => {
     const idx = currentIndex - 1;
     const m = members[idx];
+
     const requiredFields = ["name", "dept", "email", "mobile", "gender", "degree", "year"];
 
     const fieldErrors = {};
@@ -339,7 +340,7 @@ const FormField = () => {
       return;
     }
 
-    if (currentIndex < teamSize) {
+    if (currentIndex < Number(teamSize)) {
       setCurrentIndex((p) => p + 1);
       setErrors((prev) => ({ ...prev, member: {} }));
     } else {
@@ -505,21 +506,9 @@ const FormField = () => {
               {loadingTexts[loadingTextIndex]}
             </p>
             <div className="flex items-center gap-2">
-              <span
-                className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${
-                  loadingTextIndex === 0 ? "opacity-100" : "opacity-25"
-                }`}
-              />
-              <span
-                className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${
-                  loadingTextIndex === 1 ? "opacity-100" : "opacity-25"
-                }`}
-              />
-              <span
-                className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${
-                  loadingTextIndex === 2 ? "opacity-100" : "opacity-25"
-                }`}
-              />
+              <span className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${loadingTextIndex === 0 ? "opacity-100" : "opacity-25"}`} />
+              <span className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${loadingTextIndex === 1 ? "opacity-100" : "opacity-25"}`} />
+              <span className={`h-2 w-2 rounded-full bg-green-400 transition-opacity ${loadingTextIndex === 2 ? "opacity-100" : "opacity-25"}`} />
             </div>
           </div>
         </div>
@@ -554,9 +543,7 @@ const FormField = () => {
                     const msg = validateTeamName(v);
                     setErrors((prev) => ({ ...prev, teamName: msg }));
                   }}
-                  className={`p-3 rounded-xl bg-transparent border ${
-                    errors.teamName ? "border-red-500/60" : "border-green-400/30"
-                  }`}
+                  className={`p-3 rounded-xl bg-transparent border ${errors.teamName ? "border-red-500/60" : "border-green-400/30"}`}
                   required
                 />
                 {errors.teamName && <p className="text-xs text-red-400/90">{errors.teamName}</p>}
@@ -567,9 +554,7 @@ const FormField = () => {
                 <select
                   value={teamSize}
                   onChange={(e) => handleTeamSize(Number(e.target.value))}
-                  className={`p-3 rounded-xl bg-black border ${
-                    errors.teamSize ? "border-red-500/60" : "border-green-400/30"
-                  }`}
+                  className={`p-3 rounded-xl bg-black border ${errors.teamSize ? "border-red-500/60" : "border-green-400/30"}`}
                   required
                 >
                   <option value="">Select Team Size</option>
@@ -607,9 +592,7 @@ const FormField = () => {
                       if (msg) setMemberError("name", msg);
                       else clearMemberError("name");
                     }}
-                    className={`p-3 rounded-xl bg-transparent border ${
-                      memberErr.name ? "border-red-500/60" : "border-green-400/30"
-                    }`}
+                    className={`p-3 rounded-xl bg-transparent border ${memberErr.name ? "border-red-500/60" : "border-green-400/30"}`}
                     required
                   />
                   {memberErr.name && <p className="text-xs text-red-400/90">{memberErr.name}</p>}
@@ -625,9 +608,7 @@ const FormField = () => {
                       if (msg) setMemberError("dept", msg);
                       else clearMemberError("dept");
                     }}
-                    className={`p-3 rounded-xl bg-transparent border ${
-                      memberErr.dept ? "border-red-500/60" : "border-green-400/30"
-                    }`}
+                    className={`p-3 rounded-xl bg-transparent border ${memberErr.dept ? "border-red-500/60" : "border-green-400/30"}`}
                     required
                   />
                   {memberErr.dept && <p className="text-xs text-red-400/90">{memberErr.dept}</p>}
@@ -645,9 +626,7 @@ const FormField = () => {
                       if (msg) setMemberError("mobile", msg);
                       else clearMemberError("mobile");
                     }}
-                    className={`p-3 rounded-xl bg-transparent border ${
-                      memberErr.mobile ? "border-red-500/60" : "border-green-400/30"
-                    }`}
+                    className={`p-3 rounded-xl bg-transparent border ${memberErr.mobile ? "border-red-500/60" : "border-green-400/30"}`}
                     required
                   />
                   {memberErr.mobile && <p className="text-xs text-red-400/90">{memberErr.mobile}</p>}
@@ -655,11 +634,7 @@ const FormField = () => {
 
                 <div className="flex flex-col gap-2">
                   <label className="text-[11px] text-green-300/60 tracking-widest">GENDER</label>
-                  <div
-                    className={`rounded-xl border p-3 ${
-                      memberErr.gender ? "border-red-500/60" : "border-green-400/30"
-                    }`}
-                  >
+                  <div className={`rounded-xl border p-3 ${memberErr.gender ? "border-red-500/60" : "border-green-400/30"}`}>
                     <div className="flex flex-wrap gap-4">
                       {GENDERS.map((g) => (
                         <label key={g} className="flex items-center gap-2 text-sm text-green-100/90 cursor-pointer">
@@ -688,9 +663,7 @@ const FormField = () => {
                       if (msg) setMemberError("degree", msg);
                       else clearMemberError("degree");
                     }}
-                    className={`p-3 rounded-xl bg-black border ${
-                      memberErr.degree ? "border-red-500/60" : "border-green-400/30"
-                    }`}
+                    className={`p-3 rounded-xl bg-black border ${memberErr.degree ? "border-red-500/60" : "border-green-400/30"}`}
                     required
                   >
                     <option value="">Select Degree</option>
@@ -713,9 +686,7 @@ const FormField = () => {
                       if (msg) setMemberError("year", msg);
                       else clearMemberError("year");
                     }}
-                    className={`p-3 rounded-xl bg-black border ${
-                      memberErr.year ? "border-red-500/60" : "border-green-400/30"
-                    }`}
+                    className={`p-3 rounded-xl bg-black border ${memberErr.year ? "border-red-500/60" : "border-green-400/30"}`}
                     required
                   >
                     <option value="">Select Year</option>
@@ -734,9 +705,7 @@ const FormField = () => {
                   <select
                     value={currentMember.clgMode || ""}
                     onChange={(e) => handleCollegeMode(e.target.value)}
-                    className={`p-3 rounded-xl bg-black border ${
-                      memberErr.clg ? "border-red-500/60" : "border-green-400/30"
-                    }`}
+                    className={`p-3 rounded-xl bg-black border ${memberErr.clg ? "border-red-500/60" : "border-green-400/30"}`}
                     required
                   >
                     <option value="">Select College</option>
@@ -758,9 +727,7 @@ const FormField = () => {
                         else clearMemberError("clg");
                       }}
                       placeholder="Enter your college name"
-                      className={`mt-3 p-3 rounded-xl bg-transparent border ${
-                        memberErr.clg ? "border-red-500/60" : "border-green-400/30"
-                      }`}
+                      className={`mt-3 p-3 rounded-xl bg-transparent border ${memberErr.clg ? "border-red-500/60" : "border-green-400/30"}`}
                       required
                     />
                   )}
@@ -785,9 +752,7 @@ const FormField = () => {
                       if (msg) setMemberError("email", msg);
                       else clearMemberError("email");
                     }}
-                    className={`p-3 rounded-xl bg-transparent border ${
-                      memberErr.email ? "border-red-500/60" : "border-green-400/30"
-                    }`}
+                    className={`p-3 rounded-xl bg-transparent border ${memberErr.email ? "border-red-500/60" : "border-green-400/30"}`}
                     required
                   />
                   {memberErr.email && <p className="text-xs text-red-400/90">{memberErr.email}</p>}
@@ -802,9 +767,8 @@ const FormField = () => {
                 <button
                   type="button"
                   onClick={handleNext}
-                  disabled={!canProceed}
                   className={`px-8 py-2 rounded-full font-bold tracking-widest transition ${
-                    canProceed ? "bg-green-400 text-black" : "bg-white/10 text-white/40 cursor-not-allowed"
+                    canProceed ? "bg-green-400 text-black" : "bg-white/10 text-white/40"
                   }`}
                 >
                   {currentIndex === Number(teamSize) ? "REVIEW TEAM" : "NEXT"}
@@ -815,99 +779,6 @@ const FormField = () => {
 
           {showSummary && (
             <>
-              <div className="space-y-8">
-                <div className="flex items-end justify-between gap-6">
-                  <div>
-                    <h3 className="text-green-400 font-semibold tracking-widest">TEAM SUMMARY</h3>
-                    <p className="mt-2 text-sm text-green-300/60">Review the details before generating your ticket</p>
-                  </div>
-
-                  <div className="hidden md:flex items-center gap-3 text-xs tracking-widest text-green-300/60">
-                    <span className="px-3 py-1 rounded-full border border-green-400/20 bg-white/5">
-                      TEAM: {teamName || "—"}
-                    </span>
-                    <span className="px-3 py-1 rounded-full border border-green-400/20 bg-white/5">
-                      SIZE: {teamSize || "—"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {members.map((m, i) => (
-                    <div
-                      key={i}
-                      className="relative overflow-hidden rounded-2xl border border-green-400/20 bg-black/40 backdrop-blur-xl p-6 shadow-[0_0_60px_rgba(34,197,94,0.08)]"
-                    >
-                      <div className="absolute inset-0 opacity-60 bg-gradient-to-br from-green-500/10 via-transparent to-transparent pointer-events-none" />
-                      <div className="absolute -top-24 -right-24 w-56 h-56 rounded-full bg-green-500/10 blur-3xl pointer-events-none" />
-
-                      <div className="relative flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl border border-green-400/20 bg-white/5 flex items-center justify-center text-green-300 font-bold">
-                            {i + 1}
-                          </div>
-
-                          <div>
-                            <div className="text-green-200 font-semibold tracking-wide">{i === 0 ? "Leader" : `Member ${i}`}</div>
-                            <div className="text-xs text-green-300/60 tracking-widest uppercase">
-                              {(m.degree || "—") + (m.year ? ` • ${m.year} Year` : "")}
-                            </div>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowSummary(false);
-                            setCurrentIndex(i + 1);
-                          }}
-                          className="text-xs tracking-widest px-3 py-2 rounded-full border border-green-400/20 bg-white/5 hover:bg-green-500/10 hover:border-green-400/40 transition text-green-200"
-                        >
-                          EDIT
-                        </button>
-                      </div>
-
-                      <div className="relative mt-5 grid grid-cols-1 gap-3 text-sm">
-                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
-                          <span className="text-green-300/60">Name</span>
-                          <span className="text-green-100 text-right font-medium">{m.name || "—"}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
-                          <span className="text-green-300/60">College</span>
-                          <span className="text-green-100 text-right font-medium">{normalizeSpaces(m.clg) || "—"}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
-                          <span className="text-green-300/60">Department</span>
-                          <span className="text-green-100 text-right font-medium">{m.dept || "—"}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
-                          <span className="text-green-300/60">Gender</span>
-                          <span className="text-green-100 text-right font-medium">{m.gender || "—"}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
-                          <span className="text-green-300/60">Degree</span>
-                          <span className="text-green-100 text-right font-medium">{m.degree || "—"}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
-                          <span className="text-green-300/60">Email</span>
-                          <span className="text-green-100 text-right font-medium break-all">{m.email || "—"}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
-                          <span className="text-green-300/60">Mobile</span>
-                          <span className="text-green-100 text-right font-medium">{m.mobile || "—"}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-black/40 border border-green-400/20 rounded-2xl p-6 text-center text-white backdrop-blur-xl shadow-[0_0_60px_rgba(34,197,94,0.08)]">
                   <p className="font-semibold tracking-widest text-green-300">SCAN & PAY</p>
