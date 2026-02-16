@@ -61,9 +61,9 @@ export default function Hero() {
               flex items-center gap-3
               px-10 py-3 rounded-lg font-semibold text-black
               bg-green-500
-              shadow-[0_0_30px_rgba(34,197,94,0.9)] cursor-pointer
+              shadow-[0_0_30px_rgba(34,197,94,0.9)] cursor-pointer disabled
             " onClick={handleRegisterClick}>
-              Register Now! <FaArrowRight />
+              Registration Closed! <FaArrowRight />
             </motion.button>
 
             <div className="w-full sm:w-80 mt-10 lg:mt-20">
