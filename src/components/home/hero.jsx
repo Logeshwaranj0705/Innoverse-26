@@ -57,14 +57,20 @@ export default function Hero() {
               gap-6 mt-2 w-full lg:w-auto
             "
           >
-            <motion.button className="
-              flex items-center gap-3
-              px-10 py-3 rounded-lg font-semibold text-black
-              bg-green-500
-              shadow-[0_0_30px_rgba(34,197,94,0.9)] cursor-pointer disabled
-            " onClick={handleRegisterClick}>
-              Registration Closed! <FaArrowRight />
-            </motion.button>
+            <motion.button
+                  disabled
+                  className="
+                    flex items-center gap-3
+                    px-10 py-3 rounded-lg font-semibold text-black
+                    bg-green-500
+                    shadow-[0_0_30px_rgba(34,197,94,0.9)]
+                    opacity-60 cursor-not-allowed
+                    pointer-events-none
+                  "
+                >
+                  Registration Closed!
+                </motion.button>
+
 
             <div className="w-full sm:w-80 mt-10 lg:mt-20">
               {/* DATE */}
