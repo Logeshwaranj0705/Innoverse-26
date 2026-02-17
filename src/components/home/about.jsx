@@ -89,7 +89,7 @@ export default function About() {
               viewport={{ once: true }}
             >
               <h3 className="text-3xl font-extrabold text-green-400">
-                40+
+                60+
               </h3>
               <p className="text-gray-400 tracking-widest text-sm">
                 TEAM COUNTS
