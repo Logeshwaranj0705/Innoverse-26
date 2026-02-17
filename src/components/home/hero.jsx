@@ -84,7 +84,7 @@ export default function Hero() {
               <div className="mb-6 px-6 py-4 rounded-xl bg-white/5 border border-green-500 text-center shadow-[0_0_12px_rgba(34,197,94,0.9)]">
                 <FaUsers className="mx-auto mb-2 text-xl text-green-300" />
                 <p className="text-xs tracking-widest text-green-400">TEAM SIZE</p>
-                <p className="text-lg tracking-widest text-gray-400">3 – 4 Members</p>
+                <p className="text-lg tracking-widest text-gray-400">4 Members</p>
               </div>
 
               <div className="px-6 py-4 rounded-xl bg-white/5 border border-green-500 text-center shadow-[0_0_12px_rgba(34,197,94,0.9)]">
