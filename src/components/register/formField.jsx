@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Particles from "./particles";
 import Ticket from "./Ticket";
 import { api } from "../../../public/api.js";
+import scanner3 from "../../assets/scanner-3.jpeg";
 import scanner4 from "../../assets/scanner-4.jpeg";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -20,11 +21,10 @@ const GENDERS = ["Male", "Female", "Other"];
 const DEGREES = ["B.E", "B.Tech", "B.Sc", "BCA", "M.E", "M.Tech", "M.Sc", "MCA", "MBA", "PhD", "Other"];
 
 const SATHYABAMA = "Sathyabama Institute of Science and Technology";
-const TEAM_SIZE_ALLOWED = 4;
 
 export default function FormField() {
   const [teamName, setTeamName] = useState("");
-  const [teamSize, setTeamSize] = useState(String(TEAM_SIZE_ALLOWED));
+  const [teamSize, setTeamSize] = useState("");
   const [members, setMembers] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(1);
   const [showSummary, setShowSummary] = useState(false);
@@ -44,36 +44,11 @@ export default function FormField() {
     paymentImage: "",
   });
 
-  useEffect(() => {
-    if (String(teamSize) !== String(TEAM_SIZE_ALLOWED)) {
-      setTeamSize(String(TEAM_SIZE_ALLOWED));
-    }
+  const scanImg = useMemo(() => {
+    if (Number(teamSize) === 3) return scanner3;
+    if (Number(teamSize) === 4) return scanner4;
+    return scanner3;
   }, [teamSize]);
-
-  useEffect(() => {
-    setMembers(
-      Array.from({ length: TEAM_SIZE_ALLOWED }, (_, i) => ({
-        role: i === 0 ? "Leader" : `Member ${i}`,
-        name: "",
-        clgMode: "",
-        clg: "",
-        dept: "",
-        email: "",
-        mobile: "",
-        gender: "",
-        degree: "",
-        year: "",
-      }))
-    );
-    setCurrentIndex(1);
-    setShowSummary(false);
-    setPaymentImage(null);
-    setTransactionId("");
-    setSatState({ loading: false, filled: false, count: 0, limit: 0 });
-    setErrors({ teamName: "", teamSize: "", member: {}, transactionId: "", paymentImage: "" });
-  }, []);
-
-  const scanImg = useMemo(() => scanner4, []);
 
   const loadingTexts = useMemo(
     () => ["PLEASE WAIT MAY TAKE A WHILE", "DO NOT CLOSE THE TAB", "GENERATING TICKET"],
@@ -203,15 +178,7 @@ export default function FormField() {
   };
 
   const handleTeamSize = (size) => {
-    const n = Number(size);
-    if (n !== TEAM_SIZE_ALLOWED) {
-      toast.error("Only 4-member teams are allowed");
-      setErrors((prev) => ({ ...prev, teamSize: "Only 4-member teams are allowed" }));
-      setTeamSize(String(TEAM_SIZE_ALLOWED));
-      return;
-    }
-
-    setTeamSize(String(TEAM_SIZE_ALLOWED));
+    setTeamSize(size);
     setCurrentIndex(1);
     setShowSummary(false);
     setPaymentImage(null);
@@ -219,8 +186,13 @@ export default function FormField() {
     setSatState({ loading: false, filled: false, count: 0, limit: 0 });
     setErrors({ teamName: "", teamSize: "", member: {}, transactionId: "", paymentImage: "" });
 
+    if (!size) {
+      setMembers([]);
+      return;
+    }
+
     setMembers(
-      Array.from({ length: TEAM_SIZE_ALLOWED }, (_, i) => ({
+      Array.from({ length: size }, (_, i) => ({
         role: i === 0 ? "Leader" : `Member ${i}`,
         name: "",
         clgMode: "",
@@ -339,10 +311,9 @@ export default function FormField() {
       setErrors((prev) => ({ ...prev, teamName: "" }));
     }
 
-    if (Number(teamSize) !== TEAM_SIZE_ALLOWED) {
-      setErrors((prev) => ({ ...prev, teamSize: "Only 4-member teams are allowed" }));
-      toast.error("Only 4-member teams are allowed");
-      setTeamSize(String(TEAM_SIZE_ALLOWED));
+    if (!teamSize) {
+      setErrors((prev) => ({ ...prev, teamSize: "Please select team size" }));
+      toast.error("Please select team size");
       return;
     } else {
       setErrors((prev) => ({ ...prev, teamSize: "" }));
@@ -414,11 +385,6 @@ export default function FormField() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (Number(teamSize) !== TEAM_SIZE_ALLOWED) {
-      toast.error("Only 4-member teams are allowed");
-      return;
-    }
-
     const leaderIsSathyabama = normLower(members?.[0]?.clg) === normLower(SATHYABAMA);
     if (leaderIsSathyabama) {
       const filled = await fetchSathyabamaStatus();
@@ -446,7 +412,7 @@ export default function FormField() {
       const payload = {
         event: "INNOVERSE 26",
         teamName: normalizeSpaces(teamName),
-        teamSize: String(TEAM_SIZE_ALLOWED),
+        teamSize,
         members: members.map((m) => ({
           ...m,
           name: normalizeSpaces(m.name),
@@ -499,6 +465,22 @@ export default function FormField() {
   const currentMember = members[currentIndex - 1] || {};
   const isSistSelected = normLower(currentMember?.clg) === normLower(SATHYABAMA);
 
+  const canProceed = useMemo(() => {
+    if (!teamSize || !members.length) return false;
+    if (!currentMember?.clgMode) return false;
+    if (currentMember.clgMode === "SIST" && satState.filled) return false;
+
+    const req = ["name", "dept", "email", "mobile", "gender", "degree", "year"];
+    const fieldsOk = req.every((f) => !validateField(f, currentMember?.[f] ?? "", currentMember));
+    if (!fieldsOk) return false;
+
+    if (currentMember.clgMode === "OTHER") {
+      return !validateField("clg", currentMember?.clg ?? "", currentMember);
+    }
+
+    return true;
+  }, [teamSize, members.length, currentIndex, satState.filled, currentMember]);
+
   if (showTicket && ticketData) return <Ticket data={ticketData} />;
 
   return (
@@ -521,7 +503,7 @@ export default function FormField() {
           <div className="flex flex-col items-center gap-4 px-6">
             <div className="w-14 h-14 rounded-full border-4 border-green-400 border-t-transparent animate-spin" />
             <p className="text-green-300 tracking-[0.35em] text-sm text-center font-semibold">
-              {["PLEASE WAIT MAY TAKE A WHILE", "DO NOT CLOSE THE TAB", "GENERATING TICKET"][loadingTextIndex]}
+              {loadingTexts[loadingTextIndex]}
             </p>
             <div className="flex items-center gap-2">
               <span
@@ -586,21 +568,32 @@ export default function FormField() {
               <div className="flex flex-col gap-1">
                 <label className="text-[11px] text-green-300/60 tracking-widest">TEAM SIZE</label>
                 <select
-                  value={String(TEAM_SIZE_ALLOWED)}
+                  value={teamSize}
                   onChange={(e) => handleTeamSize(Number(e.target.value))}
                   className={`p-3 rounded-xl bg-black border ${
                     errors.teamSize ? "border-red-500/60" : "border-green-400/30"
                   }`}
                   required
                 >
-                  <option value="4">4 Members (Only)</option>
+                  <option value="">Select Team Size</option>
+                  <option value="3">3 Members</option>
+                  <option value="4">4 Members</option>
                 </select>
                 {errors.teamSize && <p className="text-xs text-red-400/90">{errors.teamSize}</p>}
               </div>
             </div>
           </div>
 
-          {!showSummary && (
+          {!teamSize && (
+            <div className="flex justify-center">
+              <div className="w-full max-w-xl text-center border border-green-400/30 rounded-2xl p-10 bg-black/50">
+                <h3 className="text-green-400 text-xl font-bold tracking-widest">MAKE YOUR FIRST MOVE</h3>
+                <p className="mt-3 text-green-300/60 text-sm">Select a team size to begin your Innoverse journey</p>
+              </div>
+            </div>
+          )}
+
+          {teamSize && !showSummary && (
             <div className="space-y-6">
               <h3 className="text-green-400 font-semibold tracking-widest">
                 {currentIndex === 1 ? "LEADER" : `MEMBER ${currentIndex - 1}`} DETAILS
@@ -771,7 +764,7 @@ export default function FormField() {
 
               <div className="flex items-center justify-between gap-4 relative z-50">
                 <div className="text-xs text-green-300/60 tracking-widest">
-                  {currentIndex}/{TEAM_SIZE_ALLOWED}
+                  {currentIndex}/{teamSize}
                 </div>
 
                 <button
@@ -781,9 +774,10 @@ export default function FormField() {
                     e.stopPropagation();
                     handleNext();
                   }}
+                  disabled={false}
                   className="px-8 py-2 rounded-full font-bold tracking-widest transition bg-green-400 text-black hover:opacity-90 active:scale-[0.98] pointer-events-auto relative z-50"
                 >
-                  {currentIndex === TEAM_SIZE_ALLOWED ? "REVIEW TEAM" : "NEXT"}
+                  {currentIndex === Number(teamSize) ? "REVIEW TEAM" : "NEXT"}
                 </button>
               </div>
             </div>
@@ -794,7 +788,11 @@ export default function FormField() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-black/40 border border-green-400/20 rounded-2xl p-6 text-center text-white backdrop-blur-xl shadow-[0_0_60px_rgba(34,197,94,0.08)]">
                   <p className="font-semibold tracking-widest text-green-300">SCAN & PAY</p>
-                  <img src={scanImg} alt="QR" className="mx-auto w-[260px] h-[300px] object-contain mt-3" />
+                  <img
+                    src={scanImg}
+                    alt={`QR for team size ${teamSize || ""}`}
+                    className="mx-auto w-[260px] h-[300px] object-contain mt-3"
+                  />
                   <p className="mt-2 text-xs text-green-300/60 tracking-widest">UPLOAD SCREENSHOT AFTER PAYMENT</p>
                 </div>
 
