@@ -6,7 +6,7 @@ import "aos/dist/aos.css";
 const events = [
   { title: "Registration Opens", date: "Feb 10th, 2026" },
   { title: "Registration Closes", date: "Feb 17th, 2026" },
-  { title: "Problem Statement Selection", date: "6PM Feb 26th, 2026" },
+  { title: "Problem Statement Selection", date: "6PM Feb 25th, 2026" },
   { title: "Entry Timing", date: "Feb 27th, 2026 • 8:00 AM" },
   { title: "Hackathon Starts", date: "Feb 27th, 2026 • 11:00 AM" },
   { title: "Level 1 Evaluation", date: "Feb 27th, 2026 • 4:00 PM" },
