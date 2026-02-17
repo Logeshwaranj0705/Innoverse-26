@@ -84,7 +84,7 @@ function AppInner() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/register" element={<Register />} />
+      <Route path="/A7K9X2M4Q8T1Z6YP-register" element={<Register />} />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
